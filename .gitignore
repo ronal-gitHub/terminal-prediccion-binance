@@ -1,0 +1,13 @@
+# Ignore de Git
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
