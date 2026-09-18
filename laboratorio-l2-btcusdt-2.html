@@ -1,0 +1,3346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio L2 · BTCUSDT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0e1620;
+  --ink2:#131e29;
+  --ink3:#1a2735;
+  --ink4:#223245;
+  --line:#24374a;
+  --line-soft:#1c2b3a;
+  --paper:#e6edf3;
+  --muted:#7e94a8;
+  --muted2:#546b81;
+  --bid:#2fbf87;
+  --ask:#f06a5d;
+  --signal:#e8b54b;
+  --bid-dim:rgba(47,191,135,.16);
+  --ask-dim:rgba(240,106,93,.16);
+  --sig-dim:rgba(232,181,75,.14);
+  --r:3px;
+  --sans:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:var(--sans);
+  font-size:14px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+button,select,input{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1500px;margin:0 auto;padding:0 14px 60px}
+
+/* ---------- header ---------- */
+header{
+  border-bottom:1px solid var(--line);
+  padding:16px 0 12px;
+  display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;
+}
+.brand h1{
+  font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em;
+}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:12.5px;max-width:60ch}
+.ctrl-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:10.5px;color:var(--muted2);letter-spacing:.01em}
+select,.txtin{
+  background:var(--ink2);border:1px solid var(--line);border-radius:var(--r);
+  padding:5px 8px;min-width:96px;
+}
+.btn{
+  background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);
+  padding:6px 13px;cursor:pointer;transition:background .12s,border-color .12s;
+}
+.btn:hover{background:var(--ink4)}
+.btn.primary{background:var(--bid);border-color:var(--bid);color:#06231a;font-weight:600}
+.btn.primary:hover{background:#3ed397}
+.btn.stop{background:transparent;border-color:var(--ask);color:var(--ask)}
+.btn.stop:hover{background:var(--ask-dim)}
+.btn[disabled]{opacity:.35;cursor:not-allowed}
+
+/* ---------- status strip ---------- */
+.strip{
+  display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:var(--r);
+  margin:12px 0;background:var(--ink2);
+}
+.stat{
+  flex:1 1 108px;padding:8px 12px;border-right:1px solid var(--line-soft);min-width:0;
+}
+.stat:last-child{border-right:0}
+.stat .k{font-size:10.5px;color:var(--muted2);white-space:nowrap}
+.stat .v{font-size:16px;font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat .v small{font-size:11px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;background:var(--muted2);vertical-align:middle}
+.dot.on{background:var(--bid);box-shadow:0 0 0 3px var(--bid-dim)}
+.dot.warn{background:var(--signal);box-shadow:0 0 0 3px var(--sig-dim)}
+.dot.err{background:var(--ask);box-shadow:0 0 0 3px var(--ask-dim)}
+
+/* ---------- panels ---------- */
+.grid{display:grid;gap:12px;grid-template-columns:minmax(0,340px) minmax(0,1fr) minmax(0,330px)}
+.panel{border:1px solid var(--line);border-radius:var(--r);background:var(--ink2);min-width:0;display:flex;flex-direction:column}
+.panel > h2{
+  margin:0;font-size:12px;font-weight:600;padding:9px 12px;border-bottom:1px solid var(--line-soft);
+  display:flex;align-items:baseline;gap:8px;color:var(--paper);
+}
+.panel > h2 span{font-size:10.5px;color:var(--muted2);font-weight:400}
+.pad{padding:12px}
+
+/* ---------- ladder ---------- */
+.ladder{padding:5px 0 8px}
+.lrow{
+  position:relative;display:grid;grid-template-columns:76px 58px 1fr;gap:7px;
+  padding:0 12px;height:19px;align-items:center;
+  font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums;
+}
+.lrow .px{text-align:left}
+.lrow .qt{text-align:right;color:#b9cbdb}
+.lrow .bar{display:block;height:9px;border-radius:1px;transition:width .18s linear}
+.lrow.ask .px{color:var(--ask)}
+.lrow.ask .bar{background:var(--ask-dim)}
+.lrow.bid .px{color:var(--bid)}
+.lrow.bid .bar{background:var(--bid-dim)}
+.lrow.ask.flash .bar{background:rgba(240,106,93,.5)}
+.lrow.bid.flash .bar{background:rgba(47,191,135,.5)}
+.spine{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 12px;
+  border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
+  margin:5px 0;height:34px;background:var(--ink);
+}
+.spine .s1,.spine .s3{font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums}
+.spine .s1{color:var(--bid);text-align:left}
+.spine .s3{color:var(--ask);text-align:right}
+.spine .s2{text-align:center;color:var(--muted2);font-size:10px;line-height:1.2;padding:0 14px}
+.spine .s2 b{display:block;color:var(--paper);font-size:12px;font-family:var(--mono);font-weight:500}
+
+/* ---------- obi ---------- */
+.obi-line{display:grid;grid-template-columns:34px 1fr 62px;gap:8px;align-items:center;margin-bottom:7px}
+.obi-line .lab{font-size:11px;color:var(--muted2);font-family:var(--mono)}
+.obi-track{position:relative;height:13px;background:var(--ink);border:1px solid var(--line-soft);border-radius:2px;overflow:hidden}
+.obi-track:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);}
+.obi-fill{position:absolute;top:0;bottom:0;transition:width .25s ease,left .25s ease,right .25s ease}
+.obi-val{font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* ---------- canvas charts ---------- */
+.chartbox{position:relative;padding:6px 10px 10px}
+.chartbox h3{margin:0 0 2px;font-size:11px;font-weight:500;color:var(--muted);display:flex;justify-content:space-between}
+.chartbox h3 em{font-style:normal;font-family:var(--mono);color:var(--paper);font-size:11.5px}
+canvas{display:block;width:100%;height:80px}
+
+/* ---------- tape ---------- */
+.tape{overflow-y:auto;max-height:268px;font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums}
+.trow{display:grid;grid-template-columns:64px 1fr 74px;padding:2.5px 12px;border-bottom:1px solid rgba(36,55,74,.4)}
+.trow .t{color:var(--muted2)}
+.trow .p{text-align:right}
+.trow .q{text-align:right}
+.trow.buy .p,.trow.buy .q{color:var(--bid)}
+.trow.sell .p,.trow.sell .q{color:var(--ask)}
+.trow.big{background:rgba(232,181,75,.07)}
+.trow.liq{background:var(--sig-dim)}
+.trow.liq .t{color:var(--signal)}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{
+  text-align:left;font-weight:500;font-size:10.5px;color:var(--muted2);
+  padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+td{padding:5px 10px;border-bottom:1px solid rgba(36,55,74,.45);white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.scroll{overflow:auto;max-height:290px}
+tbody tr:hover{background:var(--ink3)}
+.tag{
+  display:inline-block;padding:1px 6px;border-radius:2px;font-size:10.5px;
+  border:1px solid var(--line);background:var(--ink3);font-family:var(--mono);
+}
+.tag.abs{border-color:var(--bid);color:var(--bid);background:var(--bid-dim)}
+.tag.absv{border-color:var(--ask);color:var(--ask);background:var(--ask-dim)}
+.tag.liq{border-color:var(--signal);color:var(--signal);background:var(--sig-dim)}
+.tag.sq{border-color:var(--signal);color:var(--signal)}
+.tag.spr{border-color:var(--bid);color:var(--bid)}
+.tag.utad{border-color:var(--ask);color:var(--ask)}
+.pos{color:var(--bid)}.neg{color:var(--ask)}.dim{color:var(--muted2)}.sig{color:var(--signal)}
+
+/* ---------- misc ---------- */
+.rowline{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.note{font-size:11.5px;color:var(--muted);margin:0}
+.empty{padding:26px 14px;color:var(--muted2);font-size:12px;text-align:center}
+details{border-top:1px solid var(--line-soft)}
+summary{cursor:pointer;padding:8px 12px;font-size:11.5px;color:var(--muted);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"+ ";color:var(--muted2)}
+details[open] summary:before{content:"− "}
+.knobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:9px;padding:0 12px 12px}
+.knob label{display:block;font-size:10.5px;color:var(--muted2);margin-bottom:2px}
+.knob input{
+  width:100%;background:var(--ink);border:1px solid var(--line);border-radius:2px;padding:4px 7px;
+  font-family:var(--mono);font-size:12px;
+}
+pre{
+  margin:0;padding:11px 12px;background:var(--ink);border:1px solid var(--line-soft);border-radius:2px;
+  font-family:var(--mono);font-size:11px;line-height:1.55;overflow-x:auto;color:#a8c0d4;
+}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.banner{
+  padding:9px 12px;border-radius:var(--r);font-size:12px;border:1px solid var(--line);
+  background:var(--ink3);margin:0 0 12px;display:none;
+}
+.banner.show{display:block}
+.banner.err{border-color:var(--ask);background:var(--ask-dim)}
+.banner.ok{border-color:var(--bid);background:var(--bid-dim)}
+.sectitle{
+  font-size:12px;font-weight:600;margin:22px 0 10px;padding-bottom:7px;
+  border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:9px;
+}
+.sectitle span{font-size:11px;color:var(--muted2);font-weight:400}
+
+/* ---------- rejilla de métricas ---------- */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:1px;background:var(--line-soft)}
+.mcell{background:var(--ink2);padding:8px 11px;min-width:0}
+.mcell .k{font-size:10.5px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcell .v{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.mcell .h{font-size:10px;color:var(--muted2);margin-top:2px;line-height:1.32}
+.fprow{display:grid;grid-template-columns:72px 1fr 1fr 62px 16px;gap:4px;padding:2px 12px;
+  font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums;align-items:center}
+.fprow .b{text-align:right;color:var(--bid)}
+.fprow .s{text-align:right;color:var(--ask)}
+.fprow .d{text-align:right}
+.fprow.poc{background:rgba(232,181,75,.10)}
+.fprow .m{font-size:10px;text-align:center}
+.fphead{color:var(--muted2);font-size:10px;border-bottom:1px solid var(--line-soft);padding-bottom:3px}
+.gauge{position:relative;height:22px;background:var(--ink);border:1px solid var(--line-soft);border-radius:2px;overflow:hidden;margin:2px 0 10px}
+.gauge:after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+.gauge i{position:absolute;top:0;bottom:0;display:block;transition:width .3s,left .3s}
+.legend{font-size:10.5px;color:var(--muted2);display:flex;gap:12px;flex-wrap:wrap;padding:0 12px 10px}
+.legend b{font-weight:500;font-family:var(--mono)}
+.swatch{display:inline-block;width:8px;height:8px;border-radius:1px;margin-right:4px;vertical-align:middle}
+
+/* ---------- plegado ---------- */
+.panel > h2{cursor:pointer;user-select:none;position:relative;padding-right:30px}
+.panel > h2:hover{background:var(--ink3)}
+.chev{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:9px;transition:transform .16s}
+.panel.closed > h2{border-bottom-color:transparent}
+.panel.closed > h2 .chev,.sectitle.closed .chev{transform:translateY(-50%) rotate(-90deg)}
+.panel.closed .pbody,.sectitle.closed + .secbody{display:none}
+.sectitle{cursor:pointer;user-select:none;position:relative;padding-right:30px}
+.sectitle:hover{color:#fff}
+.btn.sm{padding:3px 10px;font-size:11.5px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+.toolbar .note{margin-left:auto;font-family:var(--mono);font-size:11px}
+.grid,.cols2{align-items:start}
+
+@media (max-width:1180px){
+  .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .grid .span{grid-column:1/-1}
+}
+@media (max-width:760px){
+  .grid,.cols2{grid-template-columns:minmax(0,1fr)}
+  .ctrl-row{margin-left:0;width:100%}
+  .stat{flex:1 1 44%;border-bottom:1px solid var(--line-soft)}
+  .lrow{height:22px;font-size:12px}
+  header{padding-top:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">
+    <h1>Laboratorio L2 · BTCUSDT</h1>
+    <p>Prueba de concepto del pipeline: reconstrucción del libro, features por segundo y detección de eventos, antes de escribir una línea de Python.</p>
+  </div>
+  <div class="ctrl-row">
+    <div class="field">
+      <label for="src">Fuente</label>
+      <select id="src">
+        <option value="sim">Simulador de mercado</option>
+        <option value="live">Binance en vivo</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="mkt">Mercado</label>
+      <select id="mkt">
+        <option value="fut">Futuros USDⓈ-M</option>
+        <option value="spot">Spot</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="speedsel">Velocidad</label>
+      <select id="speedsel">
+        <option value="1">1× tiempo real</option>
+        <option value="12">12×</option>
+        <option value="120" selected>120×</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <button class="btn primary" id="start">Iniciar captura</button>
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <button class="btn" id="pause" disabled>Pausar</button>
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <button class="btn stop" id="stop" disabled>Detener</button>
+    </div>
+    <div class="field">
+      <label for="seed">Semilla</label>
+      <input id="seed" class="txtin num" value="20260914" style="min-width:104px">
+    </div>
+  </div>
+</header>
+
+<div class="banner" id="banner"></div>
+
+<div class="strip">
+  <div class="stat"><div class="k"><span class="dot" id="dot"></span>Estado</div><div class="v" id="st-state" style="font-size:13px">Inactivo</div></div>
+  <div class="stat"><div class="k">Reloj del mercado</div><div class="v" id="st-clock">--:--:--</div></div>
+  <div class="stat"><div class="k">Mid</div><div class="v" id="st-mid">—</div></div>
+  <div class="stat"><div class="k">Spread</div><div class="v" id="st-spread">—</div></div>
+  <div class="stat"><div class="k">Eventos depth</div><div class="v" id="st-ev">0</div></div>
+  <div class="stat"><div class="k">Huecos de secuencia</div><div class="v" id="st-gap">0</div></div>
+  <div class="stat"><div class="k">Resincronizaciones</div><div class="v" id="st-res">0</div></div>
+  <div class="stat"><div class="k">Filas processed</div><div class="v" id="st-rows">0</div></div>
+  <div class="stat"><div class="k">Divergencia vs libro real</div><div class="v" id="st-drift">—</div></div>
+</div>
+
+<div class="toolbar">
+  <button class="btn sm" id="collapse-all">Plegar todo</button>
+  <button class="btn sm" id="expand-all">Expandir todo</button>
+  <span class="note" id="thrpt">Sin capturar</span>
+</div>
+
+<div class="sectitle">Mercado en directo <span>libro, desequilibrio y flujo agresor</span></div>
+<div class="grid">
+
+  <div class="panel" id="p-book">
+    <h2>Libro reconstruido <span id="lad-src">snapshot + deltas</span></h2>
+    <div class="ladder" id="ladder"></div>
+    <div class="chartbox">
+      <h3><span>Profundidad acumulada a cada lado del mid</span><em id="ch-dep">—</em></h3>
+      <canvas id="cv-dep" style="height:74px"></canvas>
+    </div>
+    <details>
+      <summary>Qué está pasando aquí</summary>
+      <p class="note" style="padding:0 12px 12px">Cada delta <span class="num">{U, u, pu, b, a}</span> <b>reemplaza</b> la cantidad del nivel, no la suma. Cantidad 0 borra el nivel. Si <span class="num">pu</span> no coincide con la <span class="num">u</span> anterior hay un hueco y el libro se descarta y se vuelve a pedir el snapshot.</p>
+    </details>
+  </div>
+
+  <div class="panel span" id="p-obi">
+    <h2>Desequilibrio del libro <span>OBI = (bid − ask) / (bid + ask)</span></h2>
+    <div class="pad" id="obibox"></div>
+    <div class="chartbox">
+      <h3><span>Mid</span><em id="ch-mid">—</em></h3>
+      <canvas id="cv-px"></canvas>
+    </div>
+    <div class="chartbox">
+      <h3><span>OBI 20</span><em id="ch-obi">—</em></h3>
+      <canvas id="cv-obi"></canvas>
+    </div>
+    <div class="chartbox">
+      <h3><span>Delta acumulado de agresores (CVD)</span><em id="ch-cvd">—</em></h3>
+      <canvas id="cv-cvd"></canvas>
+    </div>
+  </div>
+
+  <div class="panel" id="p-tape">
+    <h2>Cinta <span>agresiones y liquidaciones</span></h2>
+    <div class="tape" id="tape"><div class="empty">Sin datos todavía.</div></div>
+    <div class="strip" style="margin:0;border:0;border-top:1px solid var(--line-soft);border-radius:0">
+      <div class="stat"><div class="k">Compra agresiva 60 s</div><div class="v" style="font-size:13px;color:var(--bid)" id="st-buy">0</div></div>
+      <div class="stat"><div class="k">Venta agresiva 60 s</div><div class="v" style="font-size:13px;color:var(--ask)" id="st-sell">0</div></div>
+    </div>
+    <div class="strip" style="margin:0;border:0;border-top:1px solid var(--line-soft);border-radius:0">
+      <div class="stat"><div class="k">Liquidación long</div><div class="v" style="font-size:13px" id="st-liql">0</div></div>
+      <div class="stat"><div class="k">Liquidación short</div><div class="v" style="font-size:13px" id="st-liqs">0</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="sectitle">Contexto de derivados <span>fase 12: futuros frente a spot</span></div>
+<div class="panel" id="p-ctx">
+  <h2>Base, funding y open interest</h2>
+  <div class="strip" style="margin:0;border:0;border-radius:0;border-bottom:1px solid var(--line-soft)">
+    <div class="stat"><div class="k">Mark price</div><div class="v" style="font-size:14px" id="st-mark">—</div></div>
+    <div class="stat"><div class="k">Índice spot</div><div class="v" style="font-size:14px" id="st-spot">—</div></div>
+    <div class="stat"><div class="k">Base</div><div class="v" style="font-size:14px" id="st-basis">—</div></div>
+    <div class="stat"><div class="k">Funding estimado</div><div class="v" style="font-size:14px" id="st-fund">—</div></div>
+    <div class="stat"><div class="k">Open interest</div><div class="v" style="font-size:14px" id="st-oi">—</div></div>
+  </div>
+  <div class="chartbox">
+    <h3><span>Base futuros − spot</span><em id="ch-bas">—</em></h3>
+    <canvas id="cv-bas"></canvas>
+  </div>
+  <div class="mgrid" style="border-top:1px solid var(--line-soft)">
+    <div class="mcell"><div class="k">Cuadrante precio / OI</div><div class="v" id="m-oiq">—</div><div class="h" id="m-oiq-h">Precio y open interest en la misma ventana</div></div>
+    <div class="mcell"><div class="k">Taker buy/sell</div><div class="v" id="m-taker">—</div><div class="h">&gt;1 domina la compra agresiva</div></div>
+    <div class="mcell"><div class="k">Top traders long/short</div><div class="v" id="m-toppos">—</div><div class="h">Ratio de posición, no de cuentas</div></div>
+    <div class="mcell"><div class="k">Cuentas long/short</div><div class="v" id="m-acc">—</div><div class="h">Minorista agregado</div></div>
+  </div>
+  <p class="note pad">La base positiva con funding al alza y open interest creciendo señala apalancamiento largo acumulándose, que es lo que alimenta una cascada de liquidaciones. Mark price y funding llegan por WebSocket; open interest y los ratios se sondean por REST cada 30 s.</p>
+</div>
+
+
+<div class="sectitle">Order flow <span>todo se calcula desde la cinta de agresiones y las altas y bajas del libro</span></div>
+
+<div class="panel" id="p-of-params">
+  <h2>Parámetros <span>se aplican en caliente</span></h2>
+  <div class="knobs">
+    <div class="knob"><label for="of-barSec">Barra (s de mercado)</label><input id="of-barSec" class="num" value="60"></div>
+    <div class="knob"><label for="of-bucket">Cubo de precio (USD)</label><input id="of-bucket" class="num" value="5"></div>
+    <div class="knob"><label for="of-vaPct">Área de valor (%)</label><input id="of-vaPct" class="num" value="70"></div>
+    <div class="knob"><label for="of-vwapBars">Ventana VWAP (barras, 0 = sesión)</label><input id="of-vwapBars" class="num" value="30"></div>
+    <div class="knob"><label for="of-sig1">Banda sigma interior</label><input id="of-sig1" class="num" value="1"></div>
+    <div class="knob"><label for="of-sig2">Banda sigma exterior</label><input id="of-sig2" class="num" value="2"></div>
+    <div class="knob"><label for="of-imbRatio">Ratio de desequilibrio</label><input id="of-imbRatio" class="num" value="3"></div>
+    <div class="knob"><label for="of-imbMinVol">Volumen mínimo del lado (BTC)</label><input id="of-imbMinVol" class="num" value="0.5"></div>
+    <div class="knob"><label for="of-imbStack">Desequilibrios apilados</label><input id="of-imbStack" class="num" value="3"></div>
+    <div class="knob"><label for="of-bigTrade">Print grande (BTC)</label><input id="of-bigTrade" class="num" value="2"></div>
+    <div class="knob"><label for="of-kyleBars">Barras para lambda de Kyle</label><input id="of-kyleBars" class="num" value="30"></div>
+    <div class="knob"><label for="of-vpinBucket">Cubo VPIN (BTC)</label><input id="of-vpinBucket" class="num" value="50"></div>
+    <div class="knob"><label for="of-vpinN">Cubos promediados</label><input id="of-vpinN" class="num" value="20"></div>
+    <div class="knob"><label for="of-acLag">Desfase autocorrelación</label><input id="of-acLag" class="num" value="1"></div>
+    <div class="knob"><label for="of-slopeLevels">Niveles para pendiente</label><input id="of-slopeLevels" class="num" value="25"></div>
+    <div class="knob"><label for="of-nearUsd">Cerca del toque (USD)</label><input id="of-nearUsd" class="num" value="15"></div>
+    <div class="knob"><label for="of-spoofMin">Orden vigilada (BTC)</label><input id="of-spoofMin" class="num" value="12"></div>
+    <div class="knob"><label for="of-spoofMs">Vida máxima parpadeo (ms)</label><input id="of-spoofMs" class="num" value="2000"></div>
+    <div class="knob"><label for="of-icebergK">Ejecutado / mostrado</label><input id="of-icebergK" class="num" value="2.5"></div>
+    <div class="knob"><label for="of-divBars">Barras para divergencia</label><input id="of-divBars" class="num" value="10"></div>
+    <div class="knob"><label for="of-oiWin">Ventana de open interest (s)</label><input id="of-oiWin" class="num" value="300"></div>
+    <div class="knob"><label for="of-wDelta">Peso delta</label><input id="of-wDelta" class="num" value="1"></div>
+    <div class="knob"><label for="of-wObi">Peso OBI</label><input id="of-wObi" class="num" value="1"></div>
+    <div class="knob"><label for="of-wRepl">Peso reposición</label><input id="of-wRepl" class="num" value="1"></div>
+    <div class="knob"><label for="of-wCvd">Peso CVD</label><input id="of-wCvd" class="num" value="1"></div>
+    <div class="knob"><label for="of-wBook">Peso pendiente del libro</label><input id="of-wBook" class="num" value="1"></div>
+  </div>
+  <div class="rowline pad" style="padding-top:0">
+    <button class="btn sm" id="of-reset">Volver a los valores por defecto</button>
+    <span class="note" id="of-paramnote">Cambiar el tamaño de barra o el cubo afecta solo a lo que se calcule a partir de ahora.</span>
+  </div>
+</div>
+
+<div class="cols2">
+  <div class="panel" id="p-of-delta">
+    <h2>Delta y delta acumulado <span>quién cruza el spread</span></h2>
+    <div class="mgrid">
+      <div class="mcell"><div class="k">Delta de la barra</div><div class="v" id="m-bardelta">—</div><div class="h">Compra agresiva menos venta agresiva</div></div>
+      <div class="mcell"><div class="k">Delta máximo / mínimo</div><div class="v" id="m-mmdelta">—</div><div class="h">Recorrido del delta dentro de la barra</div></div>
+      <div class="mcell"><div class="k">CVD</div><div class="v" id="m-cvd">—</div><div class="h">Acumulado de la sesión</div></div>
+      <div class="mcell"><div class="k">Divergencia</div><div class="v" id="m-div">—</div><div class="h" id="m-div-h">Precio contra delta acumulado</div></div>
+    </div>
+    <div class="chartbox">
+      <h3><span>Delta por barra</span><em id="ch-bardelta">—</em></h3>
+      <canvas id="cv-delta" style="height:78px"></canvas>
+    </div>
+    <div class="legend"><span><i class="swatch" style="background:var(--bid)"></i>delta positivo</span><span><i class="swatch" style="background:var(--ask)"></i>delta negativo</span><span><i class="swatch" style="background:var(--signal)"></i>barra en curso</span></div>
+  </div>
+
+  <div class="panel" id="p-of-profile">
+    <h2>Perfil de volumen <span>dónde se negoció de verdad</span></h2>
+    <div class="mgrid">
+      <div class="mcell"><div class="k">POC</div><div class="v" id="m-poc">—</div><div class="h">Precio de control</div></div>
+      <div class="mcell"><div class="k">VAH</div><div class="v" id="m-vah">—</div><div class="h">Techo del área de valor</div></div>
+      <div class="mcell"><div class="k">VAL</div><div class="v" id="m-val">—</div><div class="h">Suelo del área de valor</div></div>
+      <div class="mcell"><div class="k">Posición del precio</div><div class="v" id="m-vapos">—</div><div class="h">Dentro o fuera del área</div></div>
+    </div>
+    <div class="chartbox">
+      <h3><span>Volumen por nivel de precio</span><em id="ch-prof">—</em></h3>
+      <canvas id="cv-prof" style="height:190px"></canvas>
+    </div>
+  </div>
+
+  <div class="panel" id="p-of-vwap">
+    <h2>VWAP y bandas <span>precio medio ponderado por volumen</span></h2>
+    <div class="mgrid">
+      <div class="mcell"><div class="k">VWAP</div><div class="v" id="m-vwap">—</div><div class="h">De la ventana configurada</div></div>
+      <div class="mcell"><div class="k">Distancia</div><div class="v" id="m-vwapd">—</div><div class="h">Del mid al VWAP, en sigmas</div></div>
+      <div class="mcell"><div class="k">Banda superior</div><div class="v" id="m-vwapu">—</div><div class="h">VWAP + sigma exterior</div></div>
+      <div class="mcell"><div class="k">Banda inferior</div><div class="v" id="m-vwapl">—</div><div class="h">VWAP − sigma exterior</div></div>
+    </div>
+    <div class="chartbox">
+      <h3><span>Mid contra VWAP</span><em id="ch-vwap">—</em></h3>
+      <canvas id="cv-vwap" style="height:92px"></canvas>
+    </div>
+  </div>
+
+  <div class="panel" id="p-of-foot">
+    <h2>Footprint de la barra <span>desequilibrios diagonales</span></h2>
+    <div class="mgrid">
+      <div class="mcell"><div class="k">Apilamiento</div><div class="v" id="m-stack">—</div><div class="h">Desequilibrios consecutivos</div></div>
+      <div class="mcell"><div class="k">Prints grandes</div><div class="v" id="m-big">—</div><div class="h">Por encima del umbral</div></div>
+    </div>
+    <div class="pad" style="padding-bottom:4px">
+      <div class="fprow fphead"><span>Precio</span><span class="b">Compra</span><span class="s">Venta</span><span class="d">Delta</span><span class="m"></span></div>
+    </div>
+    <div class="scroll" id="footbody" style="max-height:250px;padding-bottom:8px"><div class="empty">Sin datos todavía.</div></div>
+    <p class="note pad">Un desequilibrio comprador compara lo ejecutado contra la oferta en un precio con lo ejecutado contra la demanda un escalón por debajo. Varios seguidos en la misma dirección delatan iniciativa, no ruido.</p>
+  </div>
+
+  <div class="panel" id="p-of-micro">
+    <h2>Microestructura del libro <span>lo que no se ve en el precio</span></h2>
+    <div class="mgrid">
+      <div class="mcell"><div class="k">Micro-precio</div><div class="v" id="m-micro">—</div><div class="h">Mid ponderado por tamaño en el toque</div></div>
+      <div class="mcell"><div class="k">Sesgo del micro-precio</div><div class="v" id="m-microbps">—</div><div class="h">Desvío frente al mid, en bps</div></div>
+      <div class="mcell"><div class="k">Pendiente bid / ask</div><div class="v" id="m-slope">—</div><div class="h">BTC por USD alejándose del mid</div></div>
+      <div class="mcell"><div class="k">Reposición</div><div class="v" id="m-repl">—</div><div class="h">Liquidez añadida por BTC negociado</div></div>
+      <div class="mcell"><div class="k">Sesgo de reposición</div><div class="v" id="m-replskew">—</div><div class="h">Positivo: repone más el bid</div></div>
+      <div class="mcell"><div class="k">Parpadeo</div><div class="v" id="m-spoof">—</div><div class="h" id="m-spoof-h">Órdenes grandes retiradas sin operar</div></div>
+      <div class="mcell"><div class="k">Icebergs</div><div class="v" id="m-ice">—</div><div class="h">Niveles que absorben más de lo que muestran</div></div>
+      <div class="mcell"><div class="k">Hueco de liquidez</div><div class="v" id="m-void">—</div><div class="h">Salto mayor que el escalón del libro</div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="p-of-tox">
+    <h2>Impacto y toxicidad del flujo <span>cuánto cuesta mover el precio</span></h2>
+    <div class="mgrid">
+      <div class="mcell"><div class="k">Lambda de Kyle</div><div class="v" id="m-kyle">—</div><div class="h">USD de movimiento por BTC de delta</div></div>
+      <div class="mcell"><div class="k">VPIN</div><div class="v" id="m-vpin">—</div><div class="h">0 flujo equilibrado, 1 flujo de un solo lado</div></div>
+      <div class="mcell"><div class="k">Persistencia</div><div class="v" id="m-ac">—</div><div class="h">Autocorrelación de signos de agresión</div></div>
+      <div class="mcell"><div class="k">Esfuerzo / resultado</div><div class="v" id="m-effort">—</div><div class="h">BTC de flujo por punto básico movido</div></div>
+      <div class="mcell"><div class="k">Intensidad</div><div class="v" id="m-int">—</div><div class="h">Operaciones por segundo</div></div>
+      <div class="mcell"><div class="k">Peso de los prints grandes</div><div class="v" id="m-bigshare">—</div><div class="h">Sobre el volumen total</div></div>
+    </div>
+    <p class="note pad">Esfuerzo alto con resultado bajo es la definición cuantitativa de absorción. Lambda bajo con VPIN alto indica que alguien está moviendo mucho tamaño sin pagar impacto, que suele ser el rastro de un ejecutor algorítmico.</p>
+  </div>
+</div>
+
+<div class="panel" id="p-of-score">
+  <h2>Score compuesto <span>media ponderada de los componentes direccionales</span></h2>
+  <div class="pad">
+    <div class="gauge"><i id="g-score"></i></div>
+    <div class="rowline"><span class="num" id="m-score" style="font-size:20px">—</span><span class="note" id="m-score-h">Entre −1 y +1. No es una señal de entrada: es el resumen de hacia dónde apunta el flujo ahora mismo.</span></div>
+  </div>
+  <div class="mgrid" id="scoreparts"></div>
+</div>
+
+<div class="sectitle">Eventos detectados <span id="ev-count">0 eventos · el simulador etiqueta el escenario real para poder auditar el detector</span></div>
+
+<div class="cols2">
+  <div class="panel" id="p-events">
+    <h2>Registro de eventos</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th>Hora</th><th>Clasificación</th><th class="n">Precio</th><th>Condiciones</th><th>Inyectado</th>
+        </tr></thead>
+        <tbody id="evbody"><tr><td colspan="5" class="empty">Sin eventos todavía.</td></tr></tbody>
+      </table>
+    </div>
+    <details>
+      <summary>Umbrales del detector de absorción</summary>
+      <div class="knobs">
+        <div class="knob"><label for="k-pct">Percentil de agresión</label><input id="k-pct" class="num" value="95"></div>
+        <div class="knob"><label for="k-drop">Caída máxima tolerada %</label><input id="k-drop" class="num" value="0.30"></div>
+        <div class="knob"><label for="k-obi0">OBI de partida ≤</label><input id="k-obi0" class="num" value="-0.20"></div>
+        <div class="knob"><label for="k-obi1">OBI de confirmación ≥</label><input id="k-obi1" class="num" value="0.20"></div>
+        <div class="knob"><label for="k-rec">Recuperación mínima %</label><input id="k-rec" class="num" value="0.20"></div>
+        <div class="knob"><label for="k-win">Ventana de confirmación s</label><input id="k-win" class="num" value="90"></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="panel" id="p-stats">
+    <h2>Qué pasó después <span>retorno del mid tras cada evento</span></h2>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th>Clasificación</th><th class="n">n</th><th class="n">+1 m</th><th class="n">+5 m</th><th class="n">+15 m</th><th class="n">P(&gt;1% a 15 m)</th>
+        </tr></thead>
+        <tbody id="stbody"><tr><td colspan="6" class="empty">Necesita eventos con al menos 15 minutos de mercado por delante. A 120× eso son 7 segundos reales.</td></tr></tbody>
+      </table>
+    </div>
+    <details open>
+      <summary>Auditoría contra los escenarios inyectados</summary>
+      <div class="scroll" style="max-height:220px">
+        <table>
+          <thead><tr><th>Escenario real</th><th class="n">Inyectados</th><th class="n">Detectados</th><th class="n">Cobertura</th></tr></thead>
+          <tbody id="audbody"><tr><td colspan="4" class="empty">Solo disponible con el simulador.</td></tr></tbody>
+        </table>
+      </div>
+      <p class="note pad" id="auditline">Sin datos.</p>
+    </details>
+  </div>
+</div>
+
+<div class="sectitle">Pipeline <span>raw → processed → features, igual que en el proyecto Python</span></div>
+
+<div class="cols2">
+  <div class="panel" id="p-buf">
+    <h2>Buffers en memoria</h2>
+    <div class="scroll" style="max-height:none">
+      <table>
+        <thead><tr><th>Capa</th><th>Contenido</th><th class="n">Filas</th><th>Descarga</th></tr></thead>
+        <tbody>
+          <tr><td>raw</td><td class="dim">mensajes tal cual llegan</td><td class="n" id="c-raw">0</td><td><button class="btn" data-dl="raw">NDJSON</button></td></tr>
+          <tr><td>processed</td><td class="dim">una fila por segundo</td><td class="n" id="c-proc">0</td><td><button class="btn" data-dl="processed">CSV</button></td></tr>
+          <tr><td>features</td><td class="dim">OBI, presión, absorción</td><td class="n" id="c-feat">0</td><td><button class="btn" data-dl="features">CSV</button></td></tr>
+          <tr><td>events</td><td class="dim">clasificaciones</td><td class="n" id="c-ev">0</td><td><button class="btn" data-dl="events">CSV</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note pad">En el navegador se descargan como CSV y NDJSON. En Python las mismas columnas se escriben a Parquet particionado por día, que es lo que luego consulta DuckDB.</p>
+  </div>
+
+  <div class="panel" id="p-schema">
+    <h2>Esquema validado</h2>
+    <div class="pad"><pre id="schema">—</pre></div>
+  </div>
+</div>
+
+
+<div class="sectitle">Fuentes de datos <span>qué se puede consumir sin clave</span></div>
+<div class="cols2">
+  <div class="panel" id="p-api">
+    <h2>Endpoints públicos de Binance</h2>
+    <div class="scroll" style="max-height:none">
+      <table>
+        <thead><tr><th>Fuente</th><th>Qué aporta</th><th>Estado</th></tr></thead>
+        <tbody id="apibody"></tbody>
+      </table>
+    </div>
+    <p class="note pad" id="apinote">Todos admiten CORS y no requieren clave. El sondeo REST corre cada 30 s en modo directo.</p>
+  </div>
+  <div class="panel" id="p-api2">
+    <h2>Lo que hay que dejar en el servidor</h2>
+    <div class="pad">
+      <table>
+        <thead><tr><th>Fuente</th><th>Motivo</th></tr></thead>
+        <tbody>
+          <tr><td>Endpoints firmados de Binance</td><td class="dim">Necesitan HMAC con la clave secreta. En el navegador la expondrías a cualquiera que abra el inspector.</td></tr>
+          <tr><td>data.binance.vision</td><td class="dim">Histórico diario en ZIP de trades, aggTrades, klines y profundidad. Descarga pesada: es trabajo del cargador en Python, no del navegador.</td></tr>
+          <tr><td>Agregadores de terceros</td><td class="dim">Coinalyze, CryptoCompare y CoinGecko tienen plan gratuito con clave, pero la clave viaja en la petición. Igual: servidor.</td></tr>
+          <tr><td>Otros exchanges</td><td class="dim">Bybit, OKX y Coinbase publican libro y trades sin clave. Cruzarlos da liquidez agregada, pero cada uno con su reloj y su reconexión.</td></tr>
+        </tbody>
+      </table>
+      <p class="note" style="margin-top:10px">Regla práctica: si la petición necesita una clave, no la hagas desde el cliente. Este prototipo se limita a lo público y anónimo a propósito.</p>
+    </div>
+  </div>
+</div>
+
+<div class="sectitle">Autodiagnóstico <span>pruebas sobre las piezas puras del pipeline</span></div>
+<div class="panel" id="p-tests">
+  <h2>Batería de pruebas</h2>
+  <div class="rowline pad">
+    <button class="btn primary" id="runtests">Ejecutar pruebas</button>
+    <span class="note" id="testnote">Se ejecutan con la captura detenida porque tocan el estado global.</span>
+  </div>
+  <div class="scroll" id="testbody" style="max-height:420px"></div>
+</div>
+
+<div class="sectitle">Del prototipo al proyecto <span>lo que este POC deja cerrado</span></div>
+<div class="panel" id="p-road">
+  <h2>Cobertura del plan <span>fase por fase</span></h2>
+  <div class="pad">
+    <table>
+      <thead><tr><th>Riesgo de la fase</th><th>Qué comprueba este prototipo</th></tr></thead>
+      <tbody>
+        <tr><td>Fase 4 · reconstrucción del libro</td><td class="dim">Snapshot + deltas con validación <span class="num">U/u/pu</span>, detección de huecos y resincronización automática.</td></tr>
+        <tr><td>Fase 5 · esquema del dataset</td><td class="dim">Las columnas de processed y features se generan de verdad y se pueden abrir en pandas antes de fijarlas.</td></tr>
+        <tr><td>Fase 6 · raw / processed / features</td><td class="dim">Las tres capas coexisten y los features se pueden recalcular desde raw.</td></tr>
+        <tr><td>Fase 8 y 9 · trades y liquidaciones</td><td class="dim">Agresor clasificado, CVD acumulado y liquidaciones cruzadas con el libro.</td></tr>
+        <tr><td>Fase 14 · detector de absorción</td><td class="dim">Las cinco condiciones con umbrales editables, auditadas contra el escenario que inyecta el simulador.</td></tr>
+        <tr><td>Order flow completo</td><td class="dim">Delta y CVD, perfil de volumen con POC y área de valor, VWAP con bandas, footprint con desequilibrios diagonales, micro-precio, pendiente del libro, reposición, parpadeo, icebergs, lambda de Kyle, VPIN y persistencia del flujo. Los 26 parámetros se editan en caliente.</td></tr>
+        <tr><td>Verificación</td><td class="dim">37 pruebas automáticas sobre el libro, las utilidades, cada indicador de order flow y el detector, ejecutables desde la propia página.</td></tr>
+        <tr><td>Fase 15 · estadística condicional</td><td class="dim">Retorno a +1, +5 y +15 minutos por tipo de evento, con la muestra que genera la sesión.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+<script>
+/* =========================================================================
+   Laboratorio L2 · BTCUSDT
+   Núcleo: reloj, buffers, libro L2 y enrutado de mensajes.
+   ========================================================================= */
+'use strict';
+
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
+const fmt = (v, d = 2) => !isNum(v) ? '—'
+  : v.toLocaleString('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d });
+const signed = (v, d = 2) => !isNum(v) ? '—' : (v > 0 ? '+' : '') + fmt(v, d);
+
+function pct(sorted, p) {
+  if (!sorted.length) return NaN;
+  return sorted[clamp(Math.floor((p / 100) * (sorted.length - 1)), 0, sorted.length - 1)];
+}
+function sortedCopy(arr) { const a = Float64Array.from(arr); a.sort(); return a; }
+function mean(a) { return a.length ? a.reduce((x, y) => x + y, 0) / a.length : null; }
+function stdev(a) {
+  if (a.length < 2) return null;
+  const m = mean(a);
+  return Math.sqrt(a.reduce((s, v) => s + (v - m) * (v - m), 0) / (a.length - 1));
+}
+
+function toCSV(rows) {
+  if (!rows.length) return '';
+  const keys = Object.keys(rows[0]);
+  const out = [keys.join(',')];
+  for (const r of rows) out.push(keys.map(k => {
+    const v = r[k];
+    if (v === null || v === undefined) return '';
+    return typeof v === 'string' && v.indexOf(',') >= 0 ? '"' + v + '"' : v;
+  }).join(','));
+  return out.join('\n');
+}
+
+/* Buffer circular: escritura O(1) y memoria acotada */
+class Ring {
+  constructor(n) { this.n = n; this.a = new Array(n); this.i = 0; this.len = 0; this.total = 0; }
+  push(v) { this.a[this.i] = v; this.i = (this.i + 1) % this.n; if (this.len < this.n) this.len++; this.total++; }
+  at(k) { return this.a[(this.i - this.len + k + this.n) % this.n]; }
+  toArray() { const o = new Array(this.len); for (let k = 0; k < this.len; k++) o[k] = this.at(k); return o; }
+  last(k) { const o = []; for (let j = Math.max(0, this.len - k); j < this.len; j++) o.push(this.at(j)); return o; }
+  clear() { this.i = 0; this.len = 0; this.total = 0; }
+}
+
+/* -------------------------------------------------------------------------
+   Reloj: en simulación avanza más rápido que el real; en vivo es el del sistema
+   ------------------------------------------------------------------------- */
+const clock = {
+  mode: 'sim',
+  t: Date.UTC(2026, 8, 14, 8, 0, 0),
+  speed: 120,
+  now() { return this.mode === 'live' ? Date.now() : this.t; },
+  advance(realMs) { this.t += realMs * this.speed; },
+  hhmmss(t) {
+    const d = new Date(t === undefined ? this.now() : t), p = (n) => String(n).padStart(2, '0');
+    return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ':' + p(d.getUTCSeconds());
+  }
+};
+
+/* -------------------------------------------------------------------------
+   Libro local L2.
+   Un delta REEMPLAZA la cantidad del nivel; cantidad 0 lo elimina.
+   La continuidad se valida con U / u / pu (futuros) o U / u (spot).
+   onLevel permite que el motor de order flow observe altas y bajas sin
+   que el libro dependa de él.
+   ------------------------------------------------------------------------- */
+class OrderBook {
+  constructor(onLevel) {
+    this.bids = new Map();
+    this.asks = new Map();
+    this.lastUpdateId = 0;
+    this.prevU = null;
+    this.ready = false;
+    this.gaps = 0;
+    this.applied = 0;
+    this.stale = 0;
+    this.onLevel = onLevel || null;
+  }
+  reset() {
+    this.bids.clear(); this.asks.clear();
+    this.lastUpdateId = 0; this.prevU = null; this.ready = false;
+  }
+  applySnapshot(snap) {
+    this.bids.clear(); this.asks.clear();
+    for (const e of snap.bids) { const q = +e[1]; if (q > 0) this.bids.set(+e[0], q); }
+    for (const e of snap.asks) { const q = +e[1]; if (q > 0) this.asks.set(+e[0], q); }
+    this.lastUpdateId = snap.lastUpdateId;
+    this.prevU = null;
+    this.ready = true;
+  }
+  /* 'ok' | 'stale' | 'gap' */
+  applyDelta(ev) {
+    if (ev.u < this.lastUpdateId) { this.stale++; return 'stale'; }
+    if (this.prevU === null) {
+      const cubre = ev.U <= this.lastUpdateId && ev.u >= this.lastUpdateId;
+      const encadena = ev.pu !== undefined && ev.pu === this.lastUpdateId;
+      if (!cubre && !encadena) { this.gaps++; this.ready = false; return 'gap'; }
+    } else if (ev.pu !== undefined && ev.pu !== this.prevU) {
+      this.gaps++; this.ready = false; return 'gap';
+    }
+    this.#side(this.bids, ev.b, 'b', ev.E);
+    this.#side(this.asks, ev.a, 'a', ev.E);
+    this.prevU = ev.u;
+    this.lastUpdateId = ev.u;
+    this.applied++;
+    return 'ok';
+  }
+  #side(map, list, tag, t) {
+    if (!list) return;
+    for (let i = 0; i < list.length; i++) {
+      const p = +list[i][0], q = +list[i][1];
+      const prev = map.get(p) || 0;
+      if (q === 0) map.delete(p); else map.set(p, q);
+      if (this.onLevel && prev !== q) this.onLevel(tag, p, prev, q, t);
+    }
+  }
+  top(side, n) {
+    const map = side === 'b' ? this.bids : this.asks;
+    const arr = Array.from(map.entries());
+    arr.sort(side === 'b' ? (x, y) => y[0] - x[0] : (x, y) => x[0] - y[0]);
+    return arr.slice(0, n);
+  }
+  depthSum(side, n) {
+    const rows = this.top(side, n);
+    let s = 0; for (let i = 0; i < rows.length; i++) s += rows[i][1];
+    return s;
+  }
+  bestBid() { let m = -Infinity; for (const p of this.bids.keys()) if (p > m) m = p; return m === -Infinity ? null : m; }
+  bestAsk() { let m = Infinity; for (const p of this.asks.keys()) if (p < m) m = p; return m === Infinity ? null : m; }
+  bestBidQty() { const p = this.bestBid(); return p === null ? 0 : this.bids.get(p); }
+  bestAskQty() { const p = this.bestAsk(); return p === null ? 0 : this.asks.get(p); }
+}
+
+/* -------------------------------------------------------------------------
+   Estado global
+   ------------------------------------------------------------------------- */
+const LEVELS = [5, 10, 20, 50];
+
+function freshDet() {
+  return {
+    armBuy: null, armSell: null,
+    coolAbs: 0, coolLiq: 0, coolSq: 0, coolSpr: 0, coolBrk: 0,
+    brkPending: null
+  };
+}
+function freshCtx() {
+  return {
+    mark: null, index: null, funding: null, nextFunding: null,
+    oi: null, basis: null, takerRatio: null, topPosRatio: null, accRatio: null,
+    restAt: 0, restErr: null
+  };
+}
+
+const S = {
+  running: false,
+  paused: false,
+  source: 'sim',
+  market: 'fut',
+  symbol: 'BTCUSDT',
+  book: null,
+  raw: new Ring(6000),
+  pending: [],
+  processed: [],
+  features: [],
+  events: [],
+  tape: new Ring(160),
+  resyncs: 0,
+  lastResync: null,
+  depthEvents: 0,
+  bookDrift: null,
+  win: { buy: 0, sell: 0, nTrades: 0, liqBuy: 0, liqSell: 0, nLiq: 0 },
+  cvd: 0,
+  lastSecond: 0,
+  ctx: freshCtx(),
+  msgCount: 0, msgRateAt: 0, msgRate: 0,
+  truth: [],
+  detState: freshDet(),
+  lastRender: 0,
+  err: null
+};
+
+function newBook() { return new OrderBook((side, p, prev, q, t) => OF.onLevel(side, p, prev, q, t)); }
+S.book = newBook();
+
+function resetSession() {
+  S.book = newBook();
+  S.raw.clear(); S.tape.clear(); S.pending = [];
+  S.processed = []; S.features = []; S.events = [];
+  S.resyncs = 0; S.lastResync = null; S.depthEvents = 0;
+  S.cvd = 0; S.lastSecond = 0; S.bookDrift = null;
+  S.win = { buy: 0, sell: 0, nTrades: 0, liqBuy: 0, liqSell: 0, nLiq: 0 };
+  S.truth = [];
+  S.ctx = freshCtx();
+  S.msgCount = 0; S.msgRateAt = 0; S.msgRate = 0;
+  S.detState = freshDet();
+  OF.reset();
+}
+
+/* -------------------------------------------------------------------------
+   Punto de entrada único. Simulador y Binance entregan aquí exactamente
+   los mismos mensajes, así que el resto del pipeline no distingue la fuente.
+   ------------------------------------------------------------------------- */
+function onMessage(msg) {
+  S.raw.push(msg);
+  S.msgCount++;
+  switch (msg.e) {
+    case 'depthUpdate': {
+      S.depthEvents++;
+      if (!S.book.ready) {
+        S.pending.push(msg);
+        if (S.pending.length > 4000) S.pending.shift();
+        break;
+      }
+      if (S.book.applyDelta(msg) === 'gap') requestResync('hueco de secuencia');
+      break;
+    }
+    case 'aggTrade': {
+      const q = +msg.q, p = +msg.p;
+      const buyerIsMaker = msg.m;              // true => el agresor vendía
+      if (buyerIsMaker) { S.win.sell += q; S.cvd -= q; }
+      else { S.win.buy += q; S.cvd += q; }
+      S.win.nTrades++;
+      const t = msg.T || msg.E;
+      S.tape.push({ k: 'trade', t, p, q, side: buyerIsMaker ? 'sell' : 'buy' });
+      OF.onTrade(t, p, q, !buyerIsMaker);
+      break;
+    }
+    case 'forceOrder': {
+      const o = msg.o, q = +o.q, p = +o.p;
+      // side BUY liquida un short; side SELL liquida un long
+      if (o.S === 'BUY') S.win.liqSell += q; else S.win.liqBuy += q;
+      S.win.nLiq++;
+      S.tape.push({ k: 'liq', t: msg.E, p, q, side: o.S === 'BUY' ? 'short' : 'long' });
+      break;
+    }
+    case 'markPriceUpdate': {
+      S.ctx.mark = +msg.p;
+      S.ctx.index = +msg.i;
+      S.ctx.funding = +msg.r;
+      S.ctx.nextFunding = msg.T || null;
+      S.ctx.basis = S.ctx.index > 0 ? (S.ctx.mark - S.ctx.index) / S.ctx.index : null;
+      break;
+    }
+    case 'openInterest': {                     // en Binance llega por REST, no por WebSocket
+      S.ctx.oi = +msg.oi;
+      break;
+    }
+    case 'positioning': {                      // REST: ratios de posicionamiento
+      if (isNum(+msg.taker)) S.ctx.takerRatio = +msg.taker;
+      if (isNum(+msg.topPos)) S.ctx.topPosRatio = +msg.topPos;
+      if (isNum(+msg.acc)) S.ctx.accRatio = +msg.acc;
+      break;
+    }
+  }
+}
+
+function requestResync(reason) {
+  S.resyncs++;
+  S.lastResync = { t: clock.now(), reason };
+  S.book.reset();
+  feed.fetchSnapshot(reason);
+}
+
+function applySnapshot(snap) {
+  S.book.applySnapshot(snap);
+  const pend = S.pending; S.pending = [];
+  for (const ev of pend) {
+    if (ev.u < snap.lastUpdateId) continue;
+    if (S.book.applyDelta(ev) === 'gap') { requestResync('hueco al reproducir el buffer'); return; }
+  }
+}
+
+/* =========================================================================
+   Motor de ORDER FLOW
+   Todo lo que se calcula aquí sale de dos fuentes: la cinta de agresiones
+   (quién cruzó el spread) y las altas y bajas de niveles del libro.
+   Nada depende de velas externas ni de indicadores de precio.
+   ========================================================================= */
+
+/* Parámetros con valores por defecto. La UI los sobrescribe. */
+const P = {
+  barSec: 60,        // duración de la barra de order flow, en segundos de mercado
+  bucket: 5,         // agrupación de precio para perfil y footprint, en USD
+  vaPct: 70,         // porcentaje de volumen del área de valor
+  vwapBars: 30,      // barras de la ventana VWAP (0 = toda la sesión)
+  sig1: 1.0,         // banda sigma interior
+  sig2: 2.0,         // banda sigma exterior
+  imbRatio: 3.0,     // ratio mínimo para marcar desequilibrio diagonal
+  imbMinVol: 0.5,    // volumen mínimo del lado dominante para contarlo
+  imbStack: 3,       // desequilibrios consecutivos para considerarlo apilado
+  bigTrade: 2.0,     // print grande, en BTC
+  kyleBars: 30,      // barras para la regresión de impacto
+  vpinBucket: 50,    // tamaño del cubo de volumen VPIN, en BTC
+  vpinN: 20,         // cubos promediados
+  acLag: 1,          // desfase de la autocorrelación de signos
+  slopeLevels: 25,   // niveles usados para la pendiente del libro
+  nearUsd: 15,       // distancia al mid considerada "cerca del toque", en USD
+  spoofMin: 12.0,     // tamaño mínimo para vigilar una orden, en BTC
+  spoofMs: 2000,     // vida máxima para considerarla parpadeo
+  icebergK: 2.5,     // ejecutado / mostrado para sospechar iceberg
+  divBars: 10,       // barras para buscar divergencia delta-precio
+  oiWin: 300,        // ventana del cuadrante de open interest, en segundos
+  wDelta: 1, wObi: 1, wRepl: 1, wCvd: 1, wBook: 1   // pesos del score compuesto
+};
+
+const OF = {
+  bars: [], cur: null,
+  profile: new Map(),                 // cubo de precio -> [comprado, vendido]
+  signs: new Int8Array(8192), sIdx: 0, sLen: 0,
+  vpin: { buy: 0, sell: 0, vals: [] },
+  lvl: { addB: 0, addA: 0, remB: 0, remA: 0 },
+  perSec: new Ring(900),              // {added, removed, addB, addA, traded}
+  spoof: { pend: new Map(), score: 0, events: 0 },
+  ice: { shown: new Map(), exec: new Map(), count: 0, last: null },
+  lastTradeAt: new Map(),
+  big: { n: 0, vol: 0 },
+  mid: 0,
+  cache: { at: 0, prof: null, ac: 0, acAt: 0 },
+
+  reset() {
+    this.bars = []; this.cur = null;
+    this.profile.clear();
+    this.signs = new Int8Array(8192); this.sIdx = 0; this.sLen = 0;
+    this.vpin = { buy: 0, sell: 0, vals: [] };
+    this.lvl = { addB: 0, addA: 0, remB: 0, remA: 0 };
+    this.perSec.clear();
+    this.spoof = { pend: new Map(), score: 0, events: 0 };
+    this.ice = { shown: new Map(), exec: new Map(), count: 0, last: null };
+    this.lastTradeAt.clear();
+    this.big = { n: 0, vol: 0 };
+    this.mid = 0;
+    this.cache = { at: 0, prof: null, ac: 0, acAt: 0 };
+  },
+
+  bucketOf(p) { return Math.floor(p / P.bucket) * P.bucket; },
+
+  newBar(t, p) {
+    const t0 = Math.floor(t / (P.barSec * 1000)) * P.barSec * 1000;
+    return {
+      t0, t1: t0 + P.barSec * 1000,
+      open: p, high: p, low: p, close: p,
+      buy: 0, sell: 0, trades: 0, delta: 0, maxDelta: 0, minDelta: 0,
+      cvdEnd: S.cvd, pq: 0, q: 0, p2q: 0,
+      levels: new Map()
+    };
+  },
+
+  /* ---- cinta de agresiones ---------------------------------------------- */
+  onTrade(t, p, q, isBuy) {
+    if (!this.cur || t >= this.cur.t1) {
+      if (this.cur) { this.bars.push(this.cur); if (this.bars.length > 240) this.bars.shift(); }
+      this.cur = this.newBar(t, p);
+    }
+    const b = this.cur;
+    /* el último precio negociado es la referencia fresca para decidir qué
+       niveles están "cerca del toque"; el mid por segundo se quedaba viejo
+       en los tramos rápidos y descartaba órdenes que sí contaban */
+    this.mid = p;
+    b.close = p;
+    if (p > b.high) b.high = p;
+    if (p < b.low) b.low = p;
+    b.trades++;
+    if (isBuy) b.buy += q; else b.sell += q;
+    b.delta = b.buy - b.sell;
+    if (b.delta > b.maxDelta) b.maxDelta = b.delta;
+    if (b.delta < b.minDelta) b.minDelta = b.delta;
+    b.cvdEnd = S.cvd;
+    b.pq += p * q; b.q += q; b.p2q += p * p * q;
+
+    const k = this.bucketOf(p);
+    let lv = b.levels.get(k); if (!lv) { lv = [0, 0]; b.levels.set(k, lv); }
+    lv[isBuy ? 0 : 1] += q;
+    let pf = this.profile.get(k); if (!pf) { pf = [0, 0]; this.profile.set(k, pf); }
+    pf[isBuy ? 0 : 1] += q;
+
+    this.signs[this.sIdx] = isBuy ? 1 : -1;
+    this.sIdx = (this.sIdx + 1) % this.signs.length;
+    if (this.sLen < this.signs.length) this.sLen++;
+
+    const v = this.vpin;
+    if (isBuy) v.buy += q; else v.sell += q;
+    while (v.buy + v.sell >= P.vpinBucket) {
+      const tot = v.buy + v.sell, sc = P.vpinBucket / tot;
+      const b2 = v.buy * sc, s2 = v.sell * sc;
+      v.vals.push(Math.abs(b2 - s2) / P.vpinBucket);
+      if (v.vals.length > 400) v.vals.shift();
+      v.buy -= b2; v.sell -= s2;
+    }
+
+    if (q >= P.bigTrade) { this.big.n++; this.big.vol += q; }
+    this.lastTradeAt.set(p, t);
+    this.ice.exec.set(p, (this.ice.exec.get(p) || 0) + q);
+    const shown = this.ice.shown.get(p);
+    if (shown && shown.q > 0) {
+      const ex = this.ice.exec.get(p);
+      if (ex > shown.q * P.icebergK && ex >= P.bigTrade && !shown.flagged) {
+        shown.flagged = true;
+        this.ice.count++;
+        this.ice.last = { t, p, shown: shown.q, exec: ex };
+      }
+    }
+    if (this.lastTradeAt.size > 3000) this.prune(t);
+  },
+
+  /* ---- altas y bajas de niveles del libro -------------------------------- */
+  onLevel(side, p, prev, q, t) {
+    /* Una orden ya vigilada se sigue hasta que muere, esté donde esté el
+       precio en ese momento. Antes la puerta de distancia bloqueaba también
+       la retirada, así que las paredes se perdían justo cuando el precio se
+       alejaba, que es cuando más interesan. */
+    if (q === 0 && this.spoof.pend.has(p)) {
+      const o = this.spoof.pend.get(p);
+      if (prev >= P.spoofMin && t - o.t <= P.spoofMs) {
+        const tr = this.lastTradeAt.get(p);
+        if (!(tr && tr >= o.t)) { this.spoof.score += prev; this.spoof.events++; }
+      }
+      this.spoof.pend.delete(p);
+    }
+
+    if (!this.mid || Math.abs(p - this.mid) > P.nearUsd) return;
+
+    const add = q > prev ? q - prev : 0;
+    const rem = prev > q ? prev - q : 0;
+    if (side === 'b') { this.lvl.addB += add; this.lvl.remB += rem; }
+    else { this.lvl.addA += add; this.lvl.remA += rem; }
+
+    if (q === 0) { this.ice.shown.delete(p); this.ice.exec.delete(p); }
+    else if (prev === 0) { this.ice.shown.set(p, { q, t, flagged: false }); this.ice.exec.set(p, 0); }
+    else {
+      const sh = this.ice.shown.get(p);
+      if (!sh) this.ice.shown.set(p, { q, t, flagged: false });
+      else if (q > sh.q * 1.5) {
+        // reposición muy por encima de lo mostrado antes: es otra orden, no la
+        // misma escondiendo tamaño. La cuenta arranca de cero.
+        this.ice.shown.set(p, { q, t, flagged: false });
+        this.ice.exec.set(p, 0);
+      } else if (q > sh.q) { sh.q = q; sh.t = t; }
+    }
+
+    if (q >= P.spoofMin && prev < P.spoofMin) this.spoof.pend.set(p, { q, t, side });
+  },
+
+  prune(t) {
+    for (const [k, v] of this.lastTradeAt) if (t - v > 120000) this.lastTradeAt.delete(k);
+    for (const [k, v] of this.ice.shown) if (t - v.t > 120000) { this.ice.shown.delete(k); this.ice.exec.delete(k); }
+    for (const [k, v] of this.spoof.pend) if (t - v.t > 30000) this.spoof.pend.delete(k);
+  },
+
+  /* ---- cierre de segundo: devuelve las columnas of_* -------------------- */
+  perSecond(ts, mid, topB, topA, tradedVol) {
+    this.mid = mid;
+    this.perSec.push({
+      t: ts,
+      addB: this.lvl.addB, addA: this.lvl.addA,
+      remB: this.lvl.remB, remA: this.lvl.remA,
+      traded: tradedVol
+    });
+    this.lvl = { addB: 0, addA: 0, remB: 0, remA: 0 };
+    this.spoof.score *= 0.98;                  // decae para reflejar actividad reciente
+    this.prune(ts);
+
+    const w = this.perSec.last(60);
+    const addB = w.reduce((a, r) => a + r.addB, 0), addA = w.reduce((a, r) => a + r.addA, 0);
+    const traded = w.reduce((a, r) => a + r.traded, 0);
+    const added = addB + addA;
+
+    const vw = this.vwapStats();
+    const bq = S.book.bestBidQty(), aq = S.book.bestAskQty();
+    const bb = S.book.bestBid(), ba = S.book.bestAsk();
+    const micro = (bq + aq) > 0 ? (bq * ba + aq * bb) / (bq + aq) : mid;
+
+    const F = S.features;
+    const prev60 = F.length > 60 ? F[F.length - 60] : F[0];
+    const dPrice = prev60 ? (mid - prev60.mid) / prev60.mid * 10000 : 0;   // bps
+    const dFlow = prev60 ? S.cvd - prev60.cvd : 0;
+
+    return {
+      of_vwap: vw ? +vw.vwap.toFixed(2) : null,
+      of_vwap_sd: vw ? +vw.sd.toFixed(2) : null,
+      of_micro_price: +micro.toFixed(2),
+      of_micro_bps: +(((micro - mid) / mid) * 10000).toFixed(3),
+      of_slope_bid: this.slope(topB, mid, -1),
+      of_slope_ask: this.slope(topA, mid, 1),
+      of_repl_ratio: traded > 0 ? +(added / traded).toFixed(3) : null,
+      of_repl_skew: added > 0 ? +((addB - addA) / added).toFixed(4) : 0,
+      of_spoof: +this.spoof.score.toFixed(2),
+      of_iceberg: this.ice.count,
+      of_effort: Math.abs(dPrice) > 0.01 ? +(Math.abs(dFlow) / Math.abs(dPrice)).toFixed(3) : null,
+      of_vpin: this.vpinValue(),
+      of_kyle: this.kyle(),
+      of_sign_ac: this.signAC(ts),
+      of_intensity: +(this.cur ? this.cur.trades / Math.max(1, (ts - this.cur.t0) / 1000) : 0).toFixed(2),
+      of_big_share: this.big.vol > 0 ? +(this.big.vol / Math.max(0.001, this.totalVol())).toFixed(4) : 0,
+      of_void_usd: this.void(topB, topA),
+      of_score: null                              // se rellena abajo, necesita el resto
+    };
+  },
+
+  totalVol() { let s = 0; for (const v of this.profile.values()) s += v[0] + v[1]; return s; },
+
+  /* pendiente de la profundidad acumulada: BTC por USD alejándose del mid */
+  slope(rows, mid, dir) {
+    const n = Math.min(P.slopeLevels, rows.length);
+    if (n < 3) return null;
+    let cum = 0, sxy = 0, sxx = 0;
+    for (let i = 0; i < n; i++) {
+      cum += rows[i][1];
+      const x = dir * (rows[i][0] - mid);
+      sxy += x * cum; sxx += x * x;
+    }
+    return sxx > 0 ? +(sxy / sxx).toFixed(4) : null;
+  },
+
+  vpinValue() {
+    const v = this.vpin.vals;
+    if (v.length < 3) return null;
+    return +mean(v.slice(-P.vpinN)).toFixed(4);
+  },
+
+  /* lambda de Kyle: USD de movimiento por BTC de flujo neto */
+  kyle() {
+    const b = this.bars.slice(-P.kyleBars);
+    if (b.length < 5) return null;
+    let sxy = 0, sxx = 0;
+    for (const r of b) {
+      const x = r.delta, y = r.close - r.open;
+      sxy += x * y; sxx += x * x;
+    }
+    return sxx > 0 ? +(sxy / sxx).toFixed(5) : null;
+  },
+
+  /* autocorrelación de los signos de agresión: persistencia del flujo */
+  signAC(ts) {
+    if (ts - this.cache.acAt < 5000) return this.cache.ac;
+    this.cache.acAt = ts;
+    const n = this.sLen;
+    if (n < 200) { this.cache.ac = null; return null; }
+    const get = (k) => this.signs[(this.sIdx - n + k + this.signs.length) % this.signs.length];
+    let m = 0; for (let i = 0; i < n; i++) m += get(i);
+    m /= n;
+    let num = 0, den = 0;
+    for (let i = 0; i < n - P.acLag; i++) {
+      num += (get(i) - m) * (get(i + P.acLag) - m);
+      den += (get(i) - m) * (get(i) - m);
+    }
+    this.cache.ac = den > 0 ? +(num / den).toFixed(4) : null;
+    return this.cache.ac;
+  },
+
+  /* mayor hueco de liquidez dentro de los primeros niveles, en USD */
+  /* mayor salto de precio entre niveles consecutivos por encima del escalón
+     habitual del libro: 0 significa escalera continua */
+  void(topB, topA) {
+    let worst = 0, tick = Infinity;
+    const gaps = [];
+    const scan = (rows) => {
+      for (let i = 1; i < Math.min(rows.length, P.slopeLevels); i++) {
+        const g = Math.abs(rows[i][0] - rows[i - 1][0]);
+        if (g > 0) { gaps.push(g); if (g < tick) tick = g; }
+      }
+    };
+    scan(topB); scan(topA);
+    if (!gaps.length) return 0;
+    for (const g of gaps) if (g > worst) worst = g;
+    return +Math.max(0, worst - tick).toFixed(2);
+  },
+
+  /* ---- perfil de volumen: POC y área de valor --------------------------- */
+  profileStats(force) {
+    const now = clock.now();
+    if (!force && this.cache.prof && now - this.cache.at < 2000) return this.cache.prof;
+    const rows = Array.from(this.profile.entries())
+      .map(e => ({ p: e[0], v: e[1][0] + e[1][1], b: e[1][0], s: e[1][1] }))
+      .sort((x, y) => x.p - y.p);
+    if (!rows.length) return null;
+    let poc = rows[0], total = 0;
+    for (const r of rows) { total += r.v; if (r.v > poc.v) poc = r; }
+    const iPoc = rows.indexOf(poc);
+    const target = total * P.vaPct / 100;
+    let acc = poc.v, lo = iPoc, hi = iPoc;
+    while (acc < target && (lo > 0 || hi < rows.length - 1)) {
+      const up = hi + 1 <= rows.length - 1 ? rows[hi + 1].v : -1;
+      const dn = lo - 1 >= 0 ? rows[lo - 1].v : -1;
+      if (up >= dn) { hi++; acc += up; } else { lo--; acc += dn; }
+    }
+    const out = {
+      rows, total, poc: poc.p, pocVol: poc.v,
+      val: rows[lo].p, vah: rows[hi].p,
+      maxV: rows.reduce((m, r) => Math.max(m, r.v), 0)
+    };
+    this.cache.prof = out; this.cache.at = now;
+    return out;
+  },
+
+  /* ---- VWAP y bandas ---------------------------------------------------- */
+  vwapStats() {
+    const src = P.vwapBars > 0 ? this.bars.slice(-P.vwapBars) : this.bars.slice();
+    if (this.cur) src.push(this.cur);
+    let pq = 0, q = 0, p2q = 0;
+    for (const b of src) { pq += b.pq; q += b.q; p2q += b.p2q; }
+    if (q <= 0) return null;
+    const v = pq / q;
+    const varr = Math.max(0, p2q / q - v * v);
+    const sd = Math.sqrt(varr);
+    return { vwap: v, sd, u1: v + P.sig1 * sd, d1: v - P.sig1 * sd, u2: v + P.sig2 * sd, d2: v - P.sig2 * sd };
+  },
+
+  /* ---- footprint: desequilibrios diagonales de la barra ----------------- */
+  footprint(bar) {
+    if (!bar || !bar.levels.size) return null;
+    const ks = Array.from(bar.levels.keys()).sort((a, b) => b - a);
+    const get = (k) => bar.levels.get(k) || [0, 0];
+    const out = [];
+    for (const k of ks) {
+      const lv = get(k);
+      const below = get(k - P.bucket);      // venta ejecutada un escalón por debajo
+      const above = get(k + P.bucket);      // compra ejecutada un escalón por encima
+      let flag = 0;
+      if (lv[0] >= P.imbMinVol && lv[0] >= P.imbRatio * Math.max(below[1], 1e-9)) flag = 1;
+      else if (lv[1] >= P.imbMinVol && lv[1] >= P.imbRatio * Math.max(above[0], 1e-9)) flag = -1;
+      out.push({ p: k, buy: lv[0], sell: lv[1], flag });
+    }
+    let run = 0, best = 0, dir = 0;
+    for (const r of out) {
+      if (r.flag !== 0 && r.flag === dir) run++;
+      else { dir = r.flag; run = r.flag !== 0 ? 1 : 0; }
+      if (run > Math.abs(best)) best = run * dir;
+    }
+    return { rows: out, stack: best, stacked: Math.abs(best) >= P.imbStack };
+  },
+
+  /* ---- divergencia entre precio y delta acumulado ----------------------- */
+  divergence() {
+    const b = this.bars.slice(-P.divBars);
+    if (b.length < 4) return null;
+    const h = Math.floor(b.length / 2);
+    const A = b.slice(0, h), B = b.slice(h);
+    const mx = (a, f) => Math.max.apply(null, a.map(f));
+    const mn = (a, f) => Math.min.apply(null, a.map(f));
+    if (mx(B, x => x.high) > mx(A, x => x.high) && mx(B, x => x.cvdEnd) < mx(A, x => x.cvdEnd))
+      return { dir: 'bajista', txt: 'precio hace máximo más alto y el CVD no acompaña' };
+    if (mn(B, x => x.low) < mn(A, x => x.low) && mn(B, x => x.cvdEnd) > mn(A, x => x.cvdEnd))
+      return { dir: 'alcista', txt: 'precio hace mínimo más bajo y el CVD no acompaña' };
+    return null;
+  },
+
+  /* ---- cuadrante de open interest --------------------------------------- */
+  oiQuadrant() {
+    const Pr = S.processed;
+    if (Pr.length < 10) return null;
+    const now = Pr[Pr.length - 1];
+    if (!isNum(now.open_interest)) return null;
+    let ref = null;
+    for (let i = Pr.length - 1; i >= 0; i--) {
+      if (now.timestamp - Pr[i].timestamp >= P.oiWin * 1000) { ref = Pr[i]; break; }
+    }
+    if (!ref || !isNum(ref.open_interest)) ref = Pr[0];
+    if (!isNum(ref.open_interest)) return null;
+    const dP = (now.mid_price - ref.mid_price) / ref.mid_price * 100;
+    const dOI = (now.open_interest - ref.open_interest) / ref.open_interest * 100;
+    let lab;
+    if (dP >= 0 && dOI >= 0) lab = 'largos nuevos';
+    else if (dP >= 0 && dOI < 0) lab = 'cierre de cortos';
+    else if (dP < 0 && dOI >= 0) lab = 'cortos nuevos';
+    else lab = 'cierre de largos';
+    return { dP, dOI, lab };
+  },
+
+  /* ---- score compuesto en [-1, 1] --------------------------------------- */
+  score(f) {
+    if (!f) return null;
+    const F = S.features;
+    const w60 = F.slice(-60);
+    const dv = w60.map(r => r.delta_volume);
+    const sd = stdev(dv) || 1;
+    const cDelta = Math.tanh((f.delta_volume === undefined ? 0 : mean(dv)) / (sd || 1));
+    const cObi = f.obi_20 || 0;
+    const cRepl = f.of_repl_skew || 0;
+    const prev = F.length > 60 ? F[F.length - 60] : null;
+    const cCvd = prev ? Math.tanh((f.cvd - prev.cvd) / Math.max(1, 10 * sd)) : 0;
+    const sb = f.of_slope_bid, sa = f.of_slope_ask;
+    const cBook = isNum(sb) && isNum(sa) && (sb + sa) !== 0 ? clamp((sb - sa) / (Math.abs(sb) + Math.abs(sa)), -1, 1) : 0;
+    const parts = [
+      { k: 'Delta', v: cDelta, w: P.wDelta },
+      { k: 'OBI 20', v: cObi, w: P.wObi },
+      { k: 'Reposición', v: cRepl, w: P.wRepl },
+      { k: 'CVD 60 s', v: cCvd, w: P.wCvd },
+      { k: 'Pendiente', v: cBook, w: P.wBook }
+    ];
+    const tw = parts.reduce((a, p) => a + Math.abs(p.w), 0) || 1;
+    const val = parts.reduce((a, p) => a + p.v * p.w, 0) / tw;
+    return { val: clamp(val, -1, 1), parts };
+  }
+};
+
+/* =========================================================================
+   FUENTE A - simulador de mercado
+   Emite mensajes con la misma forma que Binance para que el resto del
+   pipeline no sepa de dónde vienen los datos. Además etiqueta el escenario
+   que inyecta, lo que permite auditar el detector.
+   ========================================================================= */
+const SIM = (() => {
+  const N = 140;                 // niveles por lado dentro de la ventana
+  const TICK = 0.5;
+  /* PRNG con semilla: dos sesiones con la misma semilla son idénticas,
+     que es lo que permite reproducir un fallo del detector */
+  let seed = 20260914;
+  let st = 0;
+  const rnd = () => {
+    st |= 0; st = st + 0x6D2B79F5 | 0;
+    let t = Math.imul(st ^ st >>> 15, 1 | st);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+  let mid = 100000, seq = 100000000;
+  let bQ = new Float64Array(N), aQ = new Float64Array(N);
+  let bBest = 0, aBest = 0;
+  const spreadTicks = 2;
+  let timer = null, tradeAcc = 0, ctxAcc = 0;
+  let sc = null;
+  let basis = 0.0004, oi = 62000, netFlow = 0;
+  let wall = null, wallsPlaced = 0, wallsPulled = 0;
+  const wallLog = [];
+
+  const randn = () => {
+    let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  };
+  const px = (p) => Math.round(p / TICK) * TICK;
+  const shape = (i) => +((0.35 + 0.8 * Math.log1p(i)) * (0.55 + 0.9 * rnd())).toFixed(3);
+
+  const SCENARIOS = {
+    calma: { dur: [60, 150], w: 30 },
+    absorcion_compradora: { dur: [120, 190], w: 12 },
+    absorcion_vendedora: { dur: [120, 190], w: 10 },
+    cascada_liq_long: { dur: [60, 110], w: 8 },
+    cascada_liq_short: { dur: [60, 110], w: 7 },
+    spring: { dur: [170, 250], w: 9 },
+    utad: { dur: [170, 250], w: 7 },
+    ruptura: { dur: [120, 190], w: 7 },
+    falsa_ruptura: { dur: [140, 210], w: 6 }
+  };
+  function newScenario() {
+    const keys = Object.keys(SCENARIOS);
+    const tot = keys.reduce((a, k) => a + SCENARIOS[k].w, 0);
+    let r = rnd() * tot, type = 'calma';
+    for (const k of keys) { r -= SCENARIOS[k].w; if (r <= 0) { type = k; break; } }
+    const d = SCENARIOS[type].dur;
+    const dur = (d[0] + rnd() * (d[1] - d[0])) * 1000;
+    sc = { type, t0: clock.now(), dur };
+    if (type !== 'calma') S.truth.push({ t: sc.t0, type, dur });
+  }
+
+  /* drift en fracción por segundo, bias en [-1,1], rate multiplica la tasa de trades */
+  function regime() {
+    const u = clamp((clock.now() - sc.t0) / sc.dur, 0, 1);
+    const R = { drift: 0, bias: 0, rate: 1, bidMult: 1, askMult: 1, liq: null, vol: 1 };
+    switch (sc.type) {
+      case 'calma':
+        R.drift = 0.000004 * randn(); break;
+      case 'absorcion_compradora':
+        // 1) el bid se vacia y la venta agresiva aprieta: OBI negativo
+        if (u < 0.22) { R.bias = -0.85; R.rate = 3.8; R.drift = -0.00003; R.bidMult = 0.40; R.askMult = 1.5; R.vol = 1.2; }
+        // 2) entra liquidez compradora y absorbe: OBI gira a positivo sin que el precio ceda
+        else if (u < 0.48) { R.bias = -0.6; R.rate = 3.2; R.drift = -0.000006; R.bidMult = 0.6 + 6.0 * (u - 0.22); R.askMult = 0.9; R.vol = 0.8; }
+        // 3) recuperacion
+        else { R.bias = 0.45; R.rate = 1.8; R.drift = 0.000054; R.bidMult = 2.4; R.askMult = 0.6; }
+        break;
+      case 'absorcion_vendedora':
+        if (u < 0.22) { R.bias = 0.85; R.rate = 3.8; R.drift = 0.00003; R.askMult = 0.40; R.bidMult = 1.5; R.vol = 1.2; }
+        else if (u < 0.48) { R.bias = 0.6; R.rate = 3.2; R.drift = 0.000006; R.askMult = 0.6 + 6.0 * (u - 0.22); R.bidMult = 0.9; R.vol = 0.8; }
+        else { R.bias = -0.45; R.rate = 1.8; R.drift = -0.000054; R.askMult = 2.4; R.bidMult = 0.6; }
+        break;
+      case 'cascada_liq_long':
+        if (u < 0.45) { R.bias = -0.9; R.rate = 4.5; R.drift = -0.000132; R.bidMult = 0.35; R.vol = 2.6; R.liq = { side: 'SELL', p: 0.6 }; }
+        else { R.bias = 0.1; R.rate = 1.4; R.drift = 0.000036; R.bidMult = 0.8; }
+        break;
+      case 'cascada_liq_short':
+        if (u < 0.45) { R.bias = 0.9; R.rate = 4.5; R.drift = 0.000132; R.askMult = 0.35; R.vol = 2.6; R.liq = { side: 'BUY', p: 0.6 }; }
+        else { R.bias = -0.1; R.rate = 1.4; R.drift = -0.000036; R.askMult = 0.8; }
+        break;
+      case 'spring':
+        if (u < 0.5) { R.bias = -0.55; R.rate = 2.2; R.drift = -0.000042; R.bidMult = 0.7; R.vol = 1.3; }
+        else if (u < 0.64) { R.bias = -0.85; R.rate = 4; R.drift = -0.000096; R.bidMult = 2.6; R.vol = 1.8; R.liq = { side: 'SELL', p: 0.3 }; }
+        else { R.bias = 0.6; R.rate = 2.4; R.drift = 0.000108; R.bidMult = 2.2; R.askMult = 0.6; }
+        break;
+      case 'utad':
+        if (u < 0.5) { R.bias = 0.55; R.rate = 2.2; R.drift = 0.000042; R.askMult = 0.7; R.vol = 1.3; }
+        else if (u < 0.64) { R.bias = 0.85; R.rate = 4; R.drift = 0.000096; R.askMult = 2.6; R.vol = 1.8; R.liq = { side: 'BUY', p: 0.3 }; }
+        else { R.bias = -0.6; R.rate = 2.4; R.drift = -0.000108; R.askMult = 2.2; R.bidMult = 0.6; }
+        break;
+      case 'ruptura':
+        R.bias = 0.5; R.rate = 2.2; R.drift = 0.000048; R.askMult = 0.55; R.vol = 1.4;
+        if (u > 0.3) R.liq = { side: 'BUY', p: 0.12 };
+        break;
+      case 'falsa_ruptura':
+        if (u < 0.48) { R.bias = 0.55; R.rate = 2.3; R.drift = 0.00006; R.askMult = 0.55; R.vol = 1.4; }
+        else { R.bias = -0.6; R.rate = 2.6; R.drift = -0.000078; R.bidMult = 0.6; R.vol = 1.6; }
+        break;
+    }
+    return R;
+  }
+
+  /* libro interno: bQ[i] es la cantidad en bBest - i*TICK */
+  function seedBook() {
+    bBest = px(mid - spreadTicks * TICK / 2);
+    aBest = bBest + spreadTicks * TICK;
+    for (let i = 0; i < N; i++) { bQ[i] = shape(i); aQ[i] = shape(i); }
+  }
+  function snapshot() {
+    const b = [], a = [];
+    for (let i = 0; i < N; i++) if (bQ[i] > 0) b.push([(bBest - i * TICK).toFixed(1), bQ[i].toFixed(3)]);
+    for (let i = 0; i < N; i++) if (aQ[i] > 0) a.push([(aBest + i * TICK).toFixed(1), aQ[i].toFixed(3)]);
+    return { lastUpdateId: seq, bids: b, asks: a };
+  }
+
+  /* desplaza la ventana de precios y acumula los cambios a emitir */
+  function shiftSide(isBid, newBest, mult, ch) {
+    const Q = isBid ? bQ : aQ;
+    const old = isBid ? bBest : aBest;
+    const dir = isBid ? 1 : -1;
+    const k = Math.round((newBest - old) / TICK) * dir;   // k>0: el mejor precio mejora
+    if (k === 0) return;
+    const price = (i, base) => base + (isBid ? -i : i) * TICK;
+    if (Math.abs(k) >= N) {
+      for (let i = 0; i < N; i++) if (Q[i] > 0) ch.push([price(i, old).toFixed(1), '0']);
+      for (let i = 0; i < N; i++) { Q[i] = shape(i) * mult; ch.push([price(i, newBest).toFixed(1), Q[i].toFixed(3)]); }
+      return;
+    }
+    if (k > 0) {
+      for (let i = N - k; i < N; i++) if (Q[i] > 0) ch.push([price(i, old).toFixed(1), '0']);
+      for (let i = N - 1; i >= k; i--) Q[i] = Q[i - k];
+      for (let i = 0; i < k; i++) { Q[i] = +(shape(i) * mult).toFixed(3); ch.push([price(i, newBest).toFixed(1), Q[i].toFixed(3)]); }
+    } else {
+      const m = -k;
+      for (let i = 0; i < m; i++) if (Q[i] > 0) ch.push([price(i, old).toFixed(1), '0']);
+      for (let i = 0; i < N - m; i++) Q[i] = Q[i + m];
+      for (let i = N - m; i < N; i++) { Q[i] = +(shape(i) * mult).toFixed(3); ch.push([price(i, newBest).toFixed(1), Q[i].toFixed(3)]); }
+    }
+  }
+
+  function emitDelta(chB, chA) {
+    if (!chB.length && !chA.length) return;
+    const U = seq + 1, u = seq + chB.length + chA.length, pu = seq;
+    seq = u;
+    if (rnd() < 0.00012) return;   // evento perdido: obliga a detectar el hueco y resincronizar
+    onMessage({ e: 'depthUpdate', E: clock.now(), T: clock.now(), s: S.symbol, U, u, pu, b: chB, a: chA });
+  }
+
+  /* base, mark price, funding y open interest: contexto de derivados */
+  function ctxTick(dtMs, R) {
+    const dt = dtMs / 1000;
+    let target = 0.0003;
+    if (sc.type === 'cascada_liq_long') target = -0.0009;
+    else if (sc.type === 'cascada_liq_short') target = 0.0012;
+    else if (sc.type === 'ruptura' || sc.type === 'utad') target = 0.0009;
+    else if (sc.type === 'spring') target = -0.0004;
+    basis += (target - basis) * 0.012 * dt + 0.00004 * Math.sqrt(dt) * randn();
+    const index = mid / (1 + basis);
+    const funding = clamp(basis * 0.85, -0.0075, 0.0075);
+    // el apalancamiento se acumula con el flujo y se destruye con las liquidaciones
+    oi += netFlow * 0.55 + (R.liq ? -Math.abs(netFlow) * 2.2 : 0) + randn() * 12;
+    oi = clamp(oi, 20000, 200000);
+    netFlow = 0;
+    onMessage({
+      e: 'markPriceUpdate', E: clock.now(), s: S.symbol,
+      p: mid.toFixed(2), i: index.toFixed(2), r: funding.toFixed(8),
+      T: clock.now() + 3600000
+    });
+    onMessage({ e: 'openInterest', E: clock.now(), s: S.symbol, oi: oi.toFixed(1) });
+    const taker = clamp(1 + R.bias * 0.55 + randn() * 0.05, 0.35, 3.2);
+    const topPos = clamp(1.05 + basis * 260 + randn() * 0.04, 0.4, 3.0);
+    onMessage({
+      e: 'positioning', E: clock.now(), s: S.symbol,
+      taker: taker.toFixed(4), topPos: topPos.toFixed(4), acc: (topPos * 0.92).toFixed(4)
+    });
+  }
+
+  function depthTick(dtMs, R) {
+    const dt = dtMs / 1000;
+    const sigma = 0.00007 * R.vol;
+    mid = mid * (1 + R.drift * dt + sigma * Math.sqrt(dt) * randn());
+    const nb = px(mid - spreadTicks * TICK / 2);
+    const na = nb + spreadTicks * TICK;
+    const chB = [], chA = [];
+    shiftSide(true, nb, R.bidMult, chB);
+    shiftSide(false, na, R.askMult, chA);
+    bBest = nb; aBest = na;
+
+    const churn = 5 + Math.floor(rnd() * 8);
+    for (let k = 0; k < churn; k++) {
+      const i = 3 + Math.floor(Math.pow(rnd(), 1.8) * (N - 4));
+      const qb = rnd() < 0.12 ? 0 : +(shape(i) * R.bidMult).toFixed(3);
+      bQ[i] = qb; chB.push([(bBest - i * TICK).toFixed(1), qb.toFixed(3)]);
+      const j = 3 + Math.floor(Math.pow(rnd(), 1.8) * (N - 4));
+      const qa = rnd() < 0.12 ? 0 : +(shape(j) * R.askMult).toFixed(3);
+      aQ[j] = qa; chA.push([(aBest + j * TICK).toFixed(1), qa.toFixed(3)]);
+    }
+    /* paredes falsas: orden grande que aparece cerca del toque y se retira
+       antes de que la toquen. Da verdad de campo al detector de spoofing. */
+    const spoofy = sc.type === 'falsa_ruptura' || sc.type === 'utad' || sc.type === 'ruptura';
+    if (!wall && spoofy && rnd() < 0.05) {
+      const onBid = R.bias >= 0;
+      const i = 4 + Math.floor(rnd() * 9);
+      const price = onBid ? nb - i * TICK : na + i * TICK;
+      const q = +(15 + rnd() * 25).toFixed(3);
+      wall = { onBid, price, q, pull: clock.now() + 400 + rnd() * 1200, t0: clock.now() };
+      wallsPlaced++;
+      if (wallLog.length > 200) wallLog.shift();
+      wallLog.push({ p: price, q, t0: wall.t0, fate: null, t1: null });
+      (onBid ? bQ : aQ)[i] = q;
+      (onBid ? chB : chA).push([price.toFixed(1), q.toFixed(3)]);
+    } else if (wall) {
+      const base = wall.onBid ? nb : na;
+      const i = Math.round(Math.abs(base - wall.price) / TICK);
+      const Q = wall.onBid ? bQ : aQ;
+      const crossed = wall.onBid ? wall.price >= nb + TICK : wall.price <= na - TICK;
+      if (i < 0 || i >= N || crossed) {                               // el precio se la comió
+        const r = wallLog[wallLog.length - 1]; if (r && r.t0 === wall.t0) { r.fate = 'cruzada'; r.t1 = clock.now(); }
+        wall = null;
+      }
+      else if (clock.now() >= wall.pull) {                           // retirada limpia
+        wallsPulled++;
+        const r = wallLog[wallLog.length - 1]; if (r && r.t0 === wall.t0) { r.fate = 'retirada'; r.t1 = clock.now(); }
+        Q[i] = 0;
+        (wall.onBid ? chB : chA).push([wall.price.toFixed(1), '0']);
+        wall = null;
+      } else if (Q[i] !== wall.q) {                                  // el churn la tocó: la sostiene
+        Q[i] = wall.q;
+        (wall.onBid ? chB : chA).push([wall.price.toFixed(1), wall.q.toFixed(3)]);
+      }
+    }
+
+    for (let i = 0; i < 10; i++) {
+      if (bQ[i] === 0 && rnd() < (i < 4 ? 0.96 : 0.85)) { bQ[i] = +(shape(i) * R.bidMult).toFixed(3); chB.push([(bBest - i * TICK).toFixed(1), bQ[i].toFixed(3)]); }
+      if (aQ[i] === 0 && rnd() < (i < 4 ? 0.96 : 0.85)) { aQ[i] = +(shape(i) * R.askMult).toFixed(3); chA.push([(aBest + i * TICK).toFixed(1), aQ[i].toFixed(3)]); }
+    }
+    emitDelta(chB, chA);
+  }
+
+  /* agresiones: consumen el mejor nivel con liquidez y emiten el delta resultante */
+  function tradeTick(R) {
+    const isBuy = rnd() < 0.5 + R.bias / 2;
+    const size = +(Math.exp(randn() * 1.0 - 1.7) * (1 + 2.0 * Math.abs(R.bias))).toFixed(3);
+    if (size <= 0.002) return;
+    const Q = isBuy ? aQ : bQ;
+    let i = 0; while (i < N && Q[i] <= 0) i++;
+    if (i >= N) return;
+    const price = isBuy ? aBest + i * TICK : bBest - i * TICK;
+    const rest = +Math.max(0, Q[i] - size).toFixed(3);
+    Q[i] = rest;
+    emitDelta(isBuy ? [] : [[price.toFixed(1), rest.toFixed(3)]],
+              isBuy ? [[price.toFixed(1), rest.toFixed(3)]] : []);
+    mid *= (1 + (isBuy ? 1 : -1) * 0.0000045 * size);
+    netFlow += (isBuy ? 1 : -1) * size;
+    onMessage({
+      e: 'aggTrade', E: clock.now(), T: clock.now(), s: S.symbol,
+      p: price.toFixed(1), q: size.toFixed(3), m: !isBuy
+    });
+  }
+
+  function liqTick(R, dt) {
+    if (!R.liq || rnd() > R.liq.p * dt * 1.2) return;
+    const q = +(Math.exp(randn() * 0.9 + 1.5)).toFixed(3);
+    const p = R.liq.side === 'BUY' ? aBest : bBest;
+    onMessage({
+      e: 'forceOrder', E: clock.now(),
+      o: { s: S.symbol, S: R.liq.side, q: q.toFixed(3), p: p.toFixed(1), ap: p.toFixed(1) }
+    });
+  }
+
+  return {
+    depthMs() { return clock.speed >= 100 ? 500 : clock.speed >= 10 ? 250 : 100; },
+    start(userSeed) {
+      clock.mode = 'sim';
+      seed = Number.isFinite(userSeed) ? (userSeed | 0) : (Date.now() | 0);
+      st = seed;
+      mid = 100000 + (rnd() - 0.5) * 400;
+      seq = 100000000; tradeAcc = 0; ctxAcc = 0;
+      basis = 0.0004; oi = 60000 + rnd() * 10000; netFlow = 0;
+      wall = null; wallsPlaced = 0; wallsPulled = 0; wallLog.length = 0;
+      bQ = new Float64Array(N); aQ = new Float64Array(N);
+      seedBook(); newScenario();
+      S.pending = [];
+      applySnapshot(snapshot());
+      timer = setInterval(() => {
+        if (S.paused) return;
+        /* El reloj avanza DENTRO del bucle. Si se adelanta de golpe al
+           principio, todos los mensajes de la ráfaga comparten marca de
+           tiempo y cualquier cosa medida en milisegundos (vida de una orden,
+           límites de barra, frescura del precio) queda mal. */
+        const step = SIM.depthMs();
+        let restante = 40 * clock.speed;
+        let presupuesto = 80;
+        while (restante > 0 && presupuesto-- > 0) {
+          const dt = Math.min(step, restante);
+          clock.t += dt;
+          restante -= dt;
+          if (clock.now() - sc.t0 > sc.dur) newScenario();
+          const R = regime();
+          depthTick(dt, R);
+          liqTick(R, dt / 1000);
+          ctxAcc += dt;
+          if (ctxAcc >= 1000) { ctxTick(Math.min(ctxAcc, 8000), R); ctxAcc = 0; }
+          tradeAcc += dt / 1000 * 3.5 * R.rate;
+          let n = Math.min(60, Math.floor(tradeAcc));
+          tradeAcc -= n;
+          while (n-- > 0) tradeTick(R);
+        }
+        if (restante > 0) clock.t += restante;   // presupuesto agotado: no perdemos tiempo de mercado
+        tick();
+      }, 40);
+    },
+    stop() { clearInterval(timer); timer = null; },
+    fetchSnapshot() { S.pending = []; applySnapshot(snapshot()); },
+    truthBook() {
+      const b = new Map(), a = new Map();
+      for (let i = 0; i < N; i++) {
+        if (bQ[i] > 0) b.set(+(bBest - i * TICK).toFixed(1), +bQ[i].toFixed(3));
+        if (aQ[i] > 0) a.set(+(aBest + i * TICK).toFixed(1), +aQ[i].toFixed(3));
+      }
+      return { bids: b, asks: a };
+    },
+    scenario() { return sc ? sc.type : '-'; },
+    walls() { return { placed: wallsPlaced, pulled: wallsPulled, log: wallLog }; },
+    seed() { return seed; }
+  };
+})();
+
+/* =========================================================================
+   FUENTE B - Binance en vivo
+   Mismo contrato: entrega mensajes a onMessage y pide snapshots por REST.
+   ========================================================================= */
+const LIVE = (() => {
+  let ws = null, reconnectT = null, loopT = null, restT = null, retries = 0, closing = false;
+  const cfg = () => S.market === 'fut'
+    ? {
+      ws: 'wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms/btcusdt@aggTrade/btcusdt@forceOrder/btcusdt@markPrice@1s',
+      rest: 'https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=1000'
+    }
+    : {
+      ws: 'wss://stream.binance.com:9443/stream?streams=btcusdt@depth@100ms/btcusdt@aggTrade',
+      rest: 'https://api.binance.com/api/v3/depth?symbol=BTCUSDT&limit=1000'
+    };
+
+  function connect() {
+    closing = false;
+    setState('Conectando', 'warn');
+    try { ws = new WebSocket(cfg().ws); }
+    catch (e) { fail('El navegador rechazó la conexión WebSocket.'); return; }
+
+    ws.onopen = () => {
+      retries = 0;
+      setState('Conectado', 'on');
+      banner('Conectado al stream público de Binance. El libro se sincroniza con el snapshot REST.', 'ok');
+      S.pending = [];
+      fetchSnapshot('arranque');
+    };
+    ws.onmessage = (m) => {
+      let d;
+      try { d = JSON.parse(m.data); } catch (e) { return; }
+      const p = d.data || d;
+      if (!p || !p.e) return;
+      if (p.e === 'depthUpdate' && S.market === 'spot') p.pu = undefined;  // spot no envía pu
+      onMessage(p);
+    };
+    ws.onerror = () => { };
+    ws.onclose = () => {
+      if (closing) return;
+      retries++;
+      const wait = Math.min(30000, 1000 * Math.pow(2, retries));
+      setState('Reconectando en ' + Math.round(wait / 1000) + ' s', 'warn');
+      if (retries > 3) fail('No se pudo mantener la conexión. Descarga este archivo y ábrelo desde tu disco, o usa el simulador.');
+      reconnectT = setTimeout(connect, wait);
+    };
+  }
+  function fail(msg) { S.err = msg; banner(msg, 'err'); }
+
+  /* Endpoints públicos de Binance que no necesitan clave y admiten CORS.
+     El WebSocket no publica open interest ni posicionamiento, así que esto
+     es lo que rellena ese hueco. */
+  const REST = {
+    oi: 'https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT',
+    taker: 'https://fapi.binance.com/futures/data/takerlongshortRatio?symbol=BTCUSDT&period=5m&limit=1',
+    topPos: 'https://fapi.binance.com/futures/data/topLongShortPositionRatio?symbol=BTCUSDT&period=5m&limit=1',
+    acc: 'https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=5m&limit=1'
+  };
+  async function getJSON(url) {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+  async function pollREST() {
+    if (S.market !== 'fut') return;
+    const out = {};
+    try {
+      const oi = await getJSON(REST.oi);
+      onMessage({ e: 'openInterest', E: Date.now(), s: S.symbol, oi: oi.openInterest });
+      out.oi = true;
+    } catch (e) { S.ctx.restErr = e.message; }
+    try {
+      const [tk, tp, ac] = await Promise.all([getJSON(REST.taker), getJSON(REST.topPos), getJSON(REST.acc)]);
+      onMessage({
+        e: 'positioning', E: Date.now(), s: S.symbol,
+        taker: tk[0] && tk[0].buySellRatio,
+        topPos: tp[0] && tp[0].longShortRatio,
+        acc: ac[0] && ac[0].longShortRatio
+      });
+      out.pos = true;
+    } catch (e) { S.ctx.restErr = e.message; }
+    S.ctx.restAt = Date.now();
+    if (out.oi || out.pos) S.ctx.restErr = null;
+  }
+
+  async function fetchSnapshot(reason) {
+    try {
+      const r = await fetch(cfg().rest, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      applySnapshot({ lastUpdateId: j.lastUpdateId, bids: j.bids, asks: j.asks });
+    } catch (e) {
+      fail('No se pudo leer el snapshot REST tras "' + (reason || 'arranque') + '" (' + e.message
+        + '). Sin snapshot no hay libro válido: el navegador está bloqueando la petición.');
+    }
+  }
+
+  return {
+    depthMs() { return 100; },
+    start() {
+      clock.mode = 'live';
+      connect();
+      loopT = setInterval(tick, 40);
+      pollREST();
+      restT = setInterval(pollREST, 30000);
+    },
+    seed() { return null; },
+    stop() {
+      closing = true;
+      if (ws) { try { ws.close(); } catch (e) { } ws = null; }
+      clearTimeout(reconnectT); clearInterval(loopT); clearInterval(restT);
+      reconnectT = null; loopT = null; restT = null;
+    },
+    fetchSnapshot,
+    scenario() { return '-'; }
+  };
+})();
+
+let feed = SIM;
+
+/* =========================================================================
+   Bucle de proceso · una fila por segundo de mercado
+   ========================================================================= */
+const CAP = 21600;
+const CACHE = { liqMean: 0, liqAt: 0, pS: 0, pB: 0, pAt: 0, p95: 0 };              // 6 h de filas en memoria
+
+function tick() {
+  const sec = Math.floor(clock.now() / 1000);
+  if (!S.lastSecond) S.lastSecond = sec - 1;
+  if (sec - S.lastSecond > 30) S.lastSecond = sec - 30;
+  while (S.lastSecond < sec) { S.lastSecond++; buildRow(S.lastSecond * 1000); }
+  const rt = performance.now();
+  if (rt - S.lastRender > 110) { S.lastRender = rt; render(); }
+}
+
+function buildRow(ts) {
+  const bk = S.book;
+  const w = S.win;
+  S.win = { buy: 0, sell: 0, nTrades: 0, liqBuy: 0, liqSell: 0, nLiq: 0 };
+  if (!bk.ready) return;
+  const bb = bk.bestBid(), ba = bk.bestAsk();
+  if (bb === null || ba === null) return;
+
+  const topB = bk.top('b', 50), topA = bk.top('a', 50);
+  const sum = (rows, n) => { let s = 0; for (let i = 0; i < Math.min(n, rows.length); i++) s += rows[i][1]; return s; };
+
+  const mid = (bb + ba) / 2;
+  const row = {
+    timestamp: ts, symbol: S.symbol,
+    best_bid: bb, best_ask: ba, mid_price: mid,
+    spread: +(ba - bb).toFixed(4),
+    spread_bps: +(((ba - bb) / mid) * 10000).toFixed(3),
+    mark_price: S.ctx.mark,
+    index_price: S.ctx.index,
+    basis_bps: S.ctx.basis === null ? null : +(S.ctx.basis * 10000).toFixed(3),
+    funding_rate: S.ctx.funding,
+    open_interest: S.ctx.oi
+  };
+  const f = { timestamp: ts };
+  for (const n of LEVELS) {
+    const bv = sum(topB, n), av = sum(topA, n);
+    row['bid_' + n] = topB[Math.min(n, topB.length) - 1] ? topB[Math.min(n, topB.length) - 1][0] : bb;
+    row['ask_' + n] = topA[Math.min(n, topA.length) - 1] ? topA[Math.min(n, topA.length) - 1][0] : ba;
+    row['bid_volume_' + n] = +bv.toFixed(3);
+    row['ask_volume_' + n] = +av.toFixed(3);
+    f['obi_' + n] = (bv + av) > 0 ? +((bv - av) / (bv + av)).toFixed(4) : 0;
+  }
+
+  f.buy_volume = +w.buy.toFixed(3);
+  f.sell_volume = +w.sell.toFixed(3);
+  f.delta_volume = +(w.buy - w.sell).toFixed(3);
+  f.cvd = +S.cvd.toFixed(3);
+  f.trades = w.nTrades;
+  f.liq_buy = +w.liqBuy.toFixed(3);
+  f.liq_sell = +w.liqSell.toFixed(3);
+  f.liq_total = +(w.liqBuy + w.liqSell).toFixed(3);
+  f.liq_count = w.nLiq;
+  f.mid = mid;
+  f.basis_bps = S.ctx.basis === null ? null : +(S.ctx.basis * 10000).toFixed(3);
+
+  const F = S.features, P = S.processed;
+  const back = (k) => F.length >= k ? F[F.length - k] : null;
+  const win60 = F.slice(-60);
+  const b60 = win60.reduce((a, r) => a + r.buy_volume, 0);
+  const s60 = win60.reduce((a, r) => a + r.sell_volume, 0);
+  f.buy_pressure = (b60 + s60) > 0 ? +(b60 / (b60 + s60)).toFixed(4) : 0.5;
+  f.sell_pressure = +(1 - f.buy_pressure).toFixed(4);
+
+  const liqNow = row['bid_volume_20'] + row['ask_volume_20'];
+  f.book_liquidity = +liqNow.toFixed(3);
+  if (!CACHE.liqAt || ts - CACHE.liqAt > 10000 || CACHE.liqMean === 0) {
+    const h = F.slice(-900);
+    CACHE.liqMean = h.length > 30 ? h.reduce((a, r) => a + r.book_liquidity, 0) / h.length : 0;
+    CACHE.liqAt = ts;
+  }
+  f.liquidity_score = CACHE.liqMean > 0 ? +(liqNow / CACHE.liqMean).toFixed(3) : 1;
+
+  // absorción instantánea: mucha agresión, poco movimiento
+  const prev = back(1);
+  const move = prev ? Math.abs(mid - prev.mid) / prev.mid * 10000 : 0;   // bps
+  const agg = f.buy_volume + f.sell_volume;
+  f.absorption_score = +(agg > 0 ? agg / (1 + move * 4) : 0).toFixed(3);
+
+  const rng = range(F, 1800, 0);
+  f.spring_score = rng && rng.lo > 0 ? +(((mid - rng.lo) / rng.lo) * 100).toFixed(3) : 0;
+  f.utad_score = rng && rng.hi > 0 ? +(((rng.hi - mid) / rng.hi) * 100).toFixed(3) : 0;
+
+  Object.assign(f, OF.perSecond(ts, mid, topB, topA, f.buy_volume + f.sell_volume));
+  const sc = OF.score(f);
+  f.of_score = sc ? +sc.val.toFixed(4) : null;
+
+  P.push(row); F.push(f);
+  if (P.length > CAP) { P.splice(0, P.length - CAP); F.splice(0, F.length - CAP); }
+
+  detect(row, f);
+  updateForward(mid, ts);
+}
+
+function range(F, lookbackSec, skipSec) {
+  const a = F.slice(Math.max(0, F.length - lookbackSec), F.length - skipSec);
+  if (a.length < 60) return null;
+  let hi = -Infinity, lo = Infinity;
+  for (const r of a) { if (r.mid > hi) hi = r.mid; if (r.mid < lo) lo = r.mid; }
+  return { hi, lo, n: a.length };
+}
+
+function knob(id, def) { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : def; }
+
+/* =========================================================================
+   Detectores
+   ========================================================================= */
+function detect(row, f) {
+  const F = S.features, d = S.detState, ts = f.timestamp, mid = f.mid;
+  const P95 = knob('k-pct', 95);
+  const DROP = knob('k-drop', 0.30);
+  const OBI0 = knob('k-obi0', -0.20);
+  const OBI1 = knob('k-obi1', 0.20);
+  const REC = knob('k-rec', 0.20);
+  const WIN = knob('k-win', 90) * 1000;
+
+  if (F.length > 120) {
+    if (!CACHE.pAt || ts - CACHE.pAt > 5000 || CACHE.p95 !== P95) {
+      const hist = F.slice(-900);
+      CACHE.pS = pct(sortedCopy(hist.map(r => r.sell_volume)), P95);
+      CACHE.pB = pct(sortedCopy(hist.map(r => r.buy_volume)), P95);
+      CACHE.pAt = ts; CACHE.p95 = P95;
+    }
+    const pS = CACHE.pS, pB = CACHE.pB;
+    const last10 = F.slice(-11);
+    const hi10 = Math.max.apply(null, last10.map(r => r.mid));
+    const lo10 = Math.min.apply(null, last10.map(r => r.mid));
+    const drop = (hi10 - mid) / hi10 * 100;
+    const rise = (mid - lo10) / lo10 * 100;
+
+    /* --- absorción compradora: el bid aguanta una venta agresiva fuerte --- */
+    if (!d.armBuy && ts > d.coolAbs && f.sell_volume > pS && pS > 0 && drop <= DROP && f.obi_20 <= OBI0) {
+      d.armBuy = { t: ts, obi0: f.obi_20, low: mid, ref: mid, sell: f.sell_volume, p95: pS, drop };
+    }
+    if (d.armBuy) {
+      const a = d.armBuy;
+      a.low = Math.min(a.low, mid);
+      const rec = (mid - a.low) / a.low * 100;
+      if (f.obi_20 >= OBI1 && rec >= REC) {
+        emit(ts, 'ABSORCIÓN COMPRADORA', 'abs', mid, [
+          'venta ' + fmt(a.sell, 2) + ' BTC/s > p' + P95 + ' (' + fmt(a.p95, 2) + ')',
+          'caída ' + fmt(a.drop, 2) + '% ≤ ' + fmt(DROP, 2) + '%',
+          'OBI ' + fmt(a.obi0, 2) + ' → ' + fmt(f.obi_20, 2),
+          'recuperación ' + signed(rec, 2) + '%'
+        ]);
+        d.armBuy = null; d.coolAbs = ts + 120000;
+      } else if (ts - a.t > WIN || (a.ref - mid) / a.ref * 100 > DROP * 3) d.armBuy = null;
+    }
+
+    /* --- absorción vendedora: el ask aguanta una compra agresiva fuerte --- */
+    if (!d.armSell && ts > d.coolAbs && f.buy_volume > pB && pB > 0 && rise <= DROP && f.obi_20 >= -OBI0) {
+      d.armSell = { t: ts, obi0: f.obi_20, high: mid, ref: mid, buy: f.buy_volume, p95: pB, rise };
+    }
+    if (d.armSell) {
+      const a = d.armSell;
+      a.high = Math.max(a.high, mid);
+      const rec = (a.high - mid) / a.high * 100;
+      if (f.obi_20 <= -OBI1 && rec >= REC) {
+        emit(ts, 'ABSORCIÓN VENDEDORA', 'absv', mid, [
+          'compra ' + fmt(a.buy, 2) + ' BTC/s > p' + P95 + ' (' + fmt(a.p95, 2) + ')',
+          'subida ' + fmt(a.rise, 2) + '% ≤ ' + fmt(DROP, 2) + '%',
+          'OBI ' + fmt(a.obi0, 2) + ' → ' + fmt(f.obi_20, 2),
+          'retroceso ' + signed(-rec, 2) + '%'
+        ]);
+        d.armSell = null; d.coolAbs = ts + 120000;
+      } else if (ts - a.t > WIN || (mid - a.ref) / a.ref * 100 > DROP * 3) d.armSell = null;
+    }
+  }
+
+  /* --- liquidaciones agrupadas --- */
+  const l5 = F.slice(-5);
+  const lb = l5.reduce((a, r) => a + r.liq_buy, 0), ls = l5.reduce((a, r) => a + r.liq_sell, 0);
+  if (ts > d.coolLiq && (lb + ls) > 8) {
+    const side = lb >= ls ? 'long' : 'short';
+    emit(ts, 'LIQUIDACIÓN ' + side.toUpperCase(), 'liq', mid, [
+      fmt(lb + ls, 2) + ' BTC liquidados en 5 s',
+      'OBI 20 ' + fmt(f.obi_20, 2),
+      'delta ' + signed(f.delta_volume, 2) + ' BTC'
+    ]);
+    d.coolLiq = ts + 90000;
+  }
+
+  /* --- squeeze: liquidaciones short + presión compradora + máximo roto --- */
+  const w60 = F.slice(-60);
+  const shortLiq = w60.reduce((a, r) => a + r.liq_sell, 0);
+  const rHi = range(F, 900, 60);
+  if (ts > d.coolSq && shortLiq > 14 && f.obi_20 > 0.18 && rHi && mid > rHi.hi) {
+    emit(ts, 'SQUEEZE', 'sq', mid, [
+      fmt(shortLiq, 2) + ' BTC de shorts liquidados en 60 s',
+      'OBI 20 ' + fmt(f.obi_20, 2) + ' > 0.18',
+      'máximo de 15 min superado'
+    ]);
+    d.coolSq = ts + 240000;
+  }
+
+  /* --- spring y utad sobre el rango de 30 min --- */
+  const r30 = range(F, 1800, 0);
+  if (r30 && ts > d.coolSpr) {
+    const arr = F.slice(-1800);
+    let idxLo = 0;
+    for (let i = 1; i < arr.length; i++) if (arr[i].mid < arr[idxLo].mid) idxLo = i;
+    const lowRow = arr[idxLo];
+    const ageLo = ts - lowRow.timestamp;
+    if (ageLo > 20000 && ageLo < 300000 && (mid - r30.lo) / r30.lo * 100 > 0.25 && f.cvd > lowRow.cvd) {
+      emit(ts, 'SPRING', 'spr', mid, [
+        'nuevo mínimo de 30 min hace ' + Math.round(ageLo / 1000) + ' s',
+        'recuperación ' + fmt((mid - r30.lo) / r30.lo * 100, 2) + '% sobre el mínimo',
+        'CVD ' + signed(f.cvd - lowRow.cvd, 1) + ' BTC desde el mínimo'
+      ]);
+      d.coolSpr = ts + 300000;
+    } else {
+      let idxHi = 0;
+      for (let i = 1; i < arr.length; i++) if (arr[i].mid > arr[idxHi].mid) idxHi = i;
+      const hiRow = arr[idxHi];
+      const ageHi = ts - hiRow.timestamp;
+      if (ageHi > 20000 && ageHi < 300000 && (r30.hi - mid) / r30.hi * 100 > 0.25 && f.cvd < hiRow.cvd) {
+        emit(ts, 'UTAD', 'utad', mid, [
+          'nuevo máximo de 30 min hace ' + Math.round(ageHi / 1000) + ' s',
+          'retroceso ' + fmt((r30.hi - mid) / r30.hi * 100, 2) + '% bajo el máximo',
+          'CVD ' + signed(f.cvd - hiRow.cvd, 1) + ' BTC desde el máximo'
+        ]);
+        d.coolSpr = ts + 300000;
+      }
+    }
+  }
+
+  /* --- ruptura confirmada o fallida --- */
+  const rB = range(F, 1800, 120);
+  if (rB && !d.brkPending && ts > d.coolBrk) {
+    if (mid > rB.hi * 1.0015) d.brkPending = { t: ts, level: rB.hi, dir: 1 };
+    else if (mid < rB.lo * 0.9985) d.brkPending = { t: ts, level: rB.lo, dir: -1 };
+  }
+  if (d.brkPending && ts - d.brkPending.t > 120000) {
+    const b = d.brkPending;
+    const held = b.dir > 0 ? mid > b.level : mid < b.level;
+    emit(ts, held ? 'RUPTURA' : 'RUPTURA FALLIDA', held ? 'sq' : 'utad', mid, [
+      (b.dir > 0 ? 'máximo' : 'mínimo') + ' de 30 min en ' + fmt(b.level, 1),
+      'a los 120 s el precio ' + (held ? 'se mantiene fuera' : 'ha vuelto al rango'),
+      'presión compradora ' + fmt(f.buy_pressure * 100, 0) + '%'
+    ]);
+    d.brkPending = null; d.coolBrk = ts + 180000;
+  }
+}
+
+function emit(ts, type, cls, price, cond) {
+  const inj = injectedAt(ts);
+  S.events.push({
+    t: ts, type, cls, price, cond,
+    injected: inj.type, truthIdx: inj.idx,
+    fwd: { 60: null, 300: null, 900: null }
+  });
+}
+
+function injectedAt(ts) {
+  for (let i = S.truth.length - 1; i >= 0; i--) {
+    const s = S.truth[i];
+    if (ts >= s.t - 5000 && ts <= s.t + s.dur + 20000) return { type: s.type, idx: i };
+  }
+  return { type: S.source === 'sim' ? 'calma' : null, idx: -1 };
+}
+
+function updateForward(mid, ts) {
+  for (let i = S.events.length - 1; i >= 0; i--) {
+    const e = S.events[i];
+    if (ts - e.t > 960000) break;
+    for (const h of [60, 300, 900]) {
+      if (e.fwd[h] === null && ts - e.t >= h * 1000) e.fwd[h] = +(((mid - e.price) / e.price) * 100).toFixed(3);
+    }
+  }
+}
+
+/* =========================================================================
+   Presentación
+   ========================================================================= */
+const LAD = 16;
+let ladRows = { a: [], b: [] }, obiRows = {}, lastQty = new Map(), lastEvCount = -1;
+
+function setState(txt, cls) {
+  $('st-state').textContent = txt;
+  $('dot').className = 'dot' + (cls ? ' ' + cls : '');
+}
+function banner(msg, cls) {
+  const b = $('banner');
+  b.textContent = msg;
+  b.className = 'banner show' + (cls ? ' ' + cls : '');
+}
+function hideBanner() { $('banner').className = 'banner'; }
+
+/* visible de verdad: falso si el panel o su sección están plegados */
+function vis(id) { const e = $(id); return !!(e && e.offsetParent !== null); }
+
+/* =========================================================================
+   Plegado de paneles y secciones
+   ========================================================================= */
+function chevron() {
+  const c = document.createElement('span');
+  c.className = 'chev'; c.textContent = '▼';
+  return c;
+}
+function toggle(head, target, host) {
+  const closed = host.classList.toggle('closed');
+  head.setAttribute('aria-expanded', String(!closed));
+  if (!closed) { S.lastRender = 0; render(); }
+}
+function makeCollapsible() {
+  document.querySelectorAll('.panel').forEach(p => {
+    const h = p.querySelector(':scope > h2');
+    if (!h) return;
+    const body = document.createElement('div');
+    body.className = 'pbody';
+    let n = h.nextSibling;
+    while (n) { const next = n.nextSibling; body.appendChild(n); n = next; }
+    p.appendChild(body);
+    h.appendChild(chevron());
+    h.setAttribute('role', 'button');
+    h.setAttribute('tabindex', '0');
+    h.setAttribute('aria-expanded', 'true');
+    h.addEventListener('click', () => toggle(h, body, p));
+    h.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(h, body, p); }
+    });
+  });
+
+  document.querySelectorAll('.sectitle').forEach(t => {
+    const body = document.createElement('div');
+    body.className = 'secbody';
+    let n = t.nextElementSibling;
+    while (n && !n.classList.contains('sectitle')) {
+      const next = n.nextElementSibling;
+      body.appendChild(n);
+      n = next;
+    }
+    t.parentNode.insertBefore(body, n);
+    t.appendChild(chevron());
+    t.setAttribute('role', 'button');
+    t.setAttribute('tabindex', '0');
+    t.setAttribute('aria-expanded', 'true');
+    t.addEventListener('click', () => toggle(t, body, t));
+    t.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(t, body, t); }
+    });
+  });
+}
+function setAll(closed) {
+  document.querySelectorAll('.panel, .sectitle').forEach(e => {
+    e.classList.toggle('closed', closed);
+    const h = e.classList.contains('sectitle') ? e : e.querySelector(':scope > h2');
+    if (h) h.setAttribute('aria-expanded', String(!closed));
+  });
+  if (!closed) { S.lastRender = 0; render(); }
+}
+
+/* =========================================================================
+   Escalera y medidores
+   ========================================================================= */
+function buildLadder() {
+  const host = $('ladder'); host.innerHTML = '';
+  const mk = (cls) => {
+    const d = document.createElement('div');
+    d.className = 'lrow ' + cls;
+    d.innerHTML = '<span class="px"></span><span class="qt"></span><i class="bar"></i>';
+    return { el: d, px: d.querySelector('.px'), qt: d.querySelector('.qt'), bar: d.querySelector('.bar') };
+  };
+  ladRows = { a: [], b: [] };
+  for (let i = LAD - 1; i >= 0; i--) { const r = mk('ask'); ladRows.a[i] = r; host.appendChild(r.el); }
+  const sp = document.createElement('div');
+  sp.className = 'spine';
+  sp.innerHTML = '<span class="s1" id="sp-bid">—</span><span class="s2">mid<b id="sp-mid">—</b></span><span class="s3" id="sp-ask">—</span>';
+  host.appendChild(sp);
+  for (let i = 0; i < LAD; i++) { const r = mk('bid'); ladRows.b[i] = r; host.appendChild(r.el); }
+
+  const ob = $('obibox'); ob.innerHTML = '';
+  obiRows = {};
+  for (const n of LEVELS) {
+    const d = document.createElement('div');
+    d.className = 'obi-line';
+    d.innerHTML = '<span class="lab">OBI ' + n + '</span><div class="obi-track"><div class="obi-fill"></div></div><span class="obi-val">—</span>';
+    ob.appendChild(d);
+    obiRows[n] = { fill: d.querySelector('.obi-fill'), val: d.querySelector('.obi-val') };
+  }
+}
+
+function paintSide(rows, data, maxQ, tag) {
+  for (let i = 0; i < LAD; i++) {
+    const r = rows[i], d = data[i];
+    if (!d) { r.px.textContent = ''; r.qt.textContent = ''; r.bar.style.width = '0'; continue; }
+    const p = d[0], q = d[1];
+    r.px.textContent = p.toFixed(1);
+    r.qt.textContent = q.toFixed(3);
+    r.bar.style.width = clamp(q / maxQ * 100, 0, 100).toFixed(1) + '%';
+    const key = tag + p;
+    if (lastQty.get(key) !== q) {
+      r.el.classList.add('flash');
+      setTimeout(() => r.el.classList.remove('flash'), 220);
+      lastQty.set(key, q);
+    }
+  }
+  if (lastQty.size > 400) lastQty.clear();
+}
+
+/* =========================================================================
+   Bucle de pintado
+   ========================================================================= */
+function render() {
+  const bk = S.book;
+  const now = performance.now();
+  if (now - S.msgRateAt > 1000) {
+    S.msgRate = Math.round(S.msgCount / ((now - S.msgRateAt) / 1000));
+    S.msgCount = 0; S.msgRateAt = now;
+  }
+  $('st-clock').textContent = clock.hhmmss();
+  $('st-ev').textContent = S.depthEvents.toLocaleString('es-ES');
+  $('st-gap').textContent = bk.gaps;
+  $('st-res').textContent = S.resyncs;
+  $('st-rows').textContent = S.processed.length.toLocaleString('es-ES');
+  $('thrpt').textContent = S.running
+    ? S.msgRate.toLocaleString('es-ES') + ' msg/s · ' + S.processed.length + ' s de mercado'
+    + (feed.seed && feed.seed() !== null ? ' · semilla ' + feed.seed() : '')
+    : 'Sin capturar';
+
+  if (vis('c-raw')) {
+    $('c-raw').textContent = S.raw.total.toLocaleString('es-ES') + (S.raw.total > S.raw.n ? ' (últ. ' + S.raw.n + ')' : '');
+    $('c-proc').textContent = S.processed.length.toLocaleString('es-ES');
+    $('c-feat').textContent = S.features.length.toLocaleString('es-ES');
+    $('c-ev').textContent = S.events.length.toLocaleString('es-ES');
+  }
+
+  if (!bk.ready) { setState(S.err ? 'Error' : 'Esperando snapshot', S.err ? 'err' : 'warn'); return; }
+  if (S.paused) setState('En pausa', 'warn');
+  else if (S.running && !S.err) setState(S.source === 'sim' ? 'Simulando · ' + feed.scenario() : 'Recibiendo', 'on');
+
+  const bb = bk.bestBid(), ba = bk.bestAsk();
+  if (bb !== null && ba !== null) {
+    const mid = (bb + ba) / 2;
+    $('st-mid').textContent = fmt(mid, 1);
+    $('st-spread').innerHTML = fmt(ba - bb, 1) + ' <small>' + fmt((ba - bb) / mid * 10000, 2) + ' bps</small>';
+    if (vis('ladder')) {
+      const A = bk.top('a', LAD), B = bk.top('b', LAD);
+      let maxQ = 0.001;
+      for (const r of A) if (r[1] > maxQ) maxQ = r[1];
+      for (const r of B) if (r[1] > maxQ) maxQ = r[1];
+      paintSide(ladRows.a, A, maxQ, 'a');
+      paintSide(ladRows.b, B, maxQ, 'b');
+      $('sp-bid').textContent = bb.toFixed(1);
+      $('sp-ask').textContent = ba.toFixed(1);
+      $('sp-mid').textContent = mid.toFixed(1);
+    }
+  }
+  drawDepth();
+
+  const f = S.features[S.features.length - 1];
+  if (f && vis('obibox')) {
+    for (const n of LEVELS) {
+      const v = f['obi_' + n], w = Math.abs(v) * 50, o = obiRows[n];
+      o.fill.style.left = (v >= 0 ? 50 : 50 - w) + '%';
+      o.fill.style.width = w.toFixed(2) + '%';
+      o.fill.style.background = v >= 0 ? 'var(--bid)' : 'var(--ask)';
+      o.val.textContent = signed(v, 3);
+      o.val.className = 'obi-val ' + (v >= 0 ? 'pos' : 'neg');
+    }
+    $('ch-obi').textContent = signed(f.obi_20, 3);
+    $('ch-cvd').textContent = signed(f.cvd, 1) + ' BTC';
+    $('ch-mid').textContent = fmt(f.mid, 1);
+  }
+  if (f && vis('tape')) {
+    const w60 = S.features.slice(-60);
+    $('st-buy').textContent = fmt(w60.reduce((a, r) => a + r.buy_volume, 0), 2);
+    $('st-sell').textContent = fmt(w60.reduce((a, r) => a + r.sell_volume, 0), 2);
+    $('st-liql').textContent = fmt(S.features.slice(-300).reduce((a, r) => a + r.liq_buy, 0), 2);
+    $('st-liqs').textContent = fmt(S.features.slice(-300).reduce((a, r) => a + r.liq_sell, 0), 2);
+    renderTape();
+  }
+
+  if (vis('cv-px')) {
+    const tail = S.features.length > 1800 ? S.features.slice(-1800) : S.features;
+    drawChart('cv-px', tail, 'mid', false);
+    drawChart('cv-obi', tail, 'obi_20', true);
+    drawChart('cv-cvd', tail, 'cvd', true);
+  }
+  renderCtx();
+  renderOF();
+  renderAPI();
+  if (vis('evbody')) renderEvents();
+  if (vis('stbody') && (S.features.length % 5 === 0 || lastEvCount !== S.events.length)) renderStats();
+  checkIntegrity();
+  if (!$('schema').dataset.done && S.processed.length) writeSchema();
+}
+
+/* =========================================================================
+   Gráficos
+   ========================================================================= */
+function sizeCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return null;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function drawChart(id, rows, key, zero) {
+  const cv = $(id), c = sizeCanvas(cv);
+  if (!c || rows.length < 2) return;
+  const ctx = c.ctx, w = c.w, h = c.h;
+  const N = 480;
+  const step = Math.max(1, Math.floor(rows.length / N));
+  const d = [];
+  for (let i = rows.length - 1; i >= 0 && d.length < N; i -= step) {
+    const v = rows[i][key];
+    d.unshift(v === null || v === undefined || Number.isNaN(v) ? 0 : v);
+  }
+  let lo = Math.min.apply(null, d), hi = Math.max.apply(null, d);
+  if (zero) { const m = Math.max(Math.abs(lo), Math.abs(hi), 0.05); lo = -m; hi = m; }
+  if (hi === lo) { hi += 1; lo -= 1; }
+  const pad = (hi - lo) * 0.12; hi += pad; lo -= pad;
+  const X = (i) => i / (d.length - 1) * (w - 2) + 1;
+  const Y = (v) => h - 3 - (v - lo) / (hi - lo) * (h - 6);
+
+  if (zero) {
+    ctx.strokeStyle = '#24374a'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, Y(0) + 0.5); ctx.lineTo(w, Y(0) + 0.5); ctx.stroke();
+  }
+  const up = d[d.length - 1] >= d[0];
+  const col = zero ? (d[d.length - 1] >= 0 ? '#2fbf87' : '#f06a5d') : (up ? '#2fbf87' : '#f06a5d');
+  ctx.beginPath();
+  for (let i = 0; i < d.length; i++) { const x = X(i), y = Y(d[i]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.strokeStyle = col; ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.lineTo(X(d.length - 1), h); ctx.lineTo(X(0), h); ctx.closePath();
+  ctx.fillStyle = col + '1f'; ctx.fill();
+
+  if (!zero && S.events.length) {
+    const t0 = rows[Math.max(0, rows.length - d.length * step)].timestamp;
+    const t1 = rows[rows.length - 1].timestamp;
+    ctx.fillStyle = '#e8b54b';
+    for (const e of S.events.slice(-40)) {
+      if (e.t < t0) continue;
+      const x = (e.t - t0) / Math.max(1, t1 - t0) * (w - 2) + 1;
+      ctx.fillRect(x - 1, 0, 2, 5);
+    }
+  }
+}
+
+/* curva de profundidad acumulada a cada lado del mid */
+function drawDepth() {
+  if (!vis('cv-dep') || !S.book.ready) return;
+  const c = sizeCanvas($('cv-dep'));
+  if (!c) return;
+  const ctx = c.ctx, w = c.w, h = c.h;
+  const M = 60;
+  const B = S.book.top('b', M), A = S.book.top('a', M);
+  if (B.length < 3 || A.length < 3) return;
+  const cum = (rows) => { let s = 0; return rows.map(r => (s += r[1])); };
+  const cb = cum(B), ca = cum(A);
+  const maxQ = Math.max(cb[cb.length - 1], ca[ca.length - 1], 0.001);
+  const half = w / 2;
+  const Y = (v) => h - 2 - v / maxQ * (h - 6);
+
+  const side = (c2, dir, col) => {
+    ctx.beginPath();
+    ctx.moveTo(half, h);
+    for (let i = 0; i < c2.length; i++) ctx.lineTo(half + dir * (i / (c2.length - 1)) * (half - 2), Y(c2[i]));
+    ctx.lineTo(half + dir * (half - 2), h);
+    ctx.closePath();
+    ctx.fillStyle = col + '26'; ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    for (let i = 0; i < c2.length; i++) {
+      const x = half + dir * (i / (c2.length - 1)) * (half - 2), y = Y(c2[i]);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+  };
+  side(cb, -1, '#2fbf87');
+  side(ca, 1, '#f06a5d');
+  ctx.strokeStyle = '#24374a'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(half + 0.5, 0); ctx.lineTo(half + 0.5, h); ctx.stroke();
+  $('ch-dep').textContent = fmt(cb[cb.length - 1], 1) + ' / ' + fmt(ca[ca.length - 1], 1) + ' BTC';
+}
+
+/* =========================================================================
+   Cinta, contexto, eventos, estadística
+   ========================================================================= */
+function hhmm(t) {
+  const d = new Date(t), p = (n) => String(n).padStart(2, '0');
+  return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ':' + p(d.getUTCSeconds());
+}
+function renderTape() {
+  const rows = S.tape.last(55).reverse();
+  if (!rows.length) return;
+  let html = '';
+  for (const r of rows) {
+    if (r.k === 'liq') {
+      html += '<div class="trow liq"><span class="t">' + hhmm(r.t) + '</span><span class="p">liq ' + r.side + '</span><span class="q">' + r.q.toFixed(3) + '</span></div>';
+    } else {
+      html += '<div class="trow ' + r.side + (r.q > 3 ? ' big' : '') + '"><span class="t">' + hhmm(r.t) + '</span><span class="p">' + r.p.toFixed(1) + '</span><span class="q">' + r.q.toFixed(3) + '</span></div>';
+    }
+  }
+  $('tape').innerHTML = html;
+}
+
+function renderCtx() {
+  if (!vis('st-mark')) return;
+  const c = S.ctx;
+  $('st-mark').textContent = c.mark === null ? '—' : fmt(c.mark, 1);
+  $('st-spot').textContent = c.index === null ? '—' : fmt(c.index, 1);
+  const bp = c.basis === null ? null : c.basis * 10000;
+  $('st-basis').innerHTML = bp === null ? '—'
+    : '<span class="' + (bp >= 0 ? 'pos' : 'neg') + '">' + signed(bp, 2) + ' bps</span>';
+  $('st-fund').innerHTML = c.funding === null ? '—'
+    : '<span class="' + (c.funding >= 0 ? 'pos' : 'neg') + '">' + signed(c.funding * 100, 4) + '%</span>';
+  $('st-oi').textContent = c.oi === null ? '—' : fmt(c.oi, 0) + ' BTC';
+  $('ch-bas').textContent = bp === null ? '—' : signed(bp, 2) + ' bps';
+  const q = OF.oiQuadrant();
+  setv('m-oiq', q ? q.lab : '—', q ? (q.lab.indexOf('largos nuevos') === 0 || q.lab.indexOf('cierre de cortos') === 0 ? 'pos' : 'neg') : 'dim');
+  $('m-oiq-h').textContent = q
+    ? 'precio ' + signed(q.dP, 2) + '% y open interest ' + signed(q.dOI, 2) + '% en ' + P.oiWin + ' s'
+    : 'Precio y open interest en la misma ventana';
+  setv('m-taker', isNum(c.takerRatio) ? fmt(c.takerRatio, 3) : '—', isNum(c.takerRatio) ? (c.takerRatio >= 1 ? 'pos' : 'neg') : 'dim');
+  setv('m-toppos', isNum(c.topPosRatio) ? fmt(c.topPosRatio, 3) : '—', isNum(c.topPosRatio) ? (c.topPosRatio >= 1 ? 'pos' : 'neg') : 'dim');
+  setv('m-acc', isNum(c.accRatio) ? fmt(c.accRatio, 3) : '—', isNum(c.accRatio) ? (c.accRatio >= 1 ? 'pos' : 'neg') : 'dim');
+  if (S.features.length > 1) {
+    const tail = S.features.length > 1800 ? S.features.slice(-1800) : S.features;
+    drawChart('cv-bas', tail, 'basis_bps', true);
+  }
+}
+
+function renderEvents() {
+  $('ev-count').textContent = S.events.length + ' eventos · '
+    + (S.source === 'sim' ? 'el simulador etiqueta el escenario real para poder auditar el detector' : 'en vivo no hay etiqueta de referencia');
+  const evs = S.events.slice(-70).reverse();
+  if (!evs.length) return;
+  let html = '';
+  for (const e of evs) {
+    const fp = S.source === 'sim' && e.injected === 'calma';
+    html += '<tr><td class="dim num">' + hhmm(e.t) + '</td>'
+      + '<td><span class="tag ' + e.cls + '">' + e.type + '</span></td>'
+      + '<td class="n">' + fmt(e.price, 1) + '</td>'
+      + '<td class="dim" style="white-space:normal;font-size:11px">' + e.cond.join(' · ') + '</td>'
+      + '<td class="num" style="font-size:11px' + (fp ? ';color:var(--signal)' : '') + '">'
+      + (e.injected || '—') + (fp ? ' ·  falso positivo' : '') + '</td></tr>';
+  }
+  $('evbody').innerHTML = html;
+}
+
+function renderStats() {
+  lastEvCount = S.events.length;
+  const g = {};
+  for (const e of S.events) {
+    if (!g[e.type]) g[e.type] = { n: 0, h: { 60: [], 300: [], 900: [] } };
+    g[e.type].n++;
+    for (const h of [60, 300, 900]) if (e.fwd[h] !== null) g[e.type].h[h].push(e.fwd[h]);
+  }
+  const keys = Object.keys(g);
+  if (keys.length) {
+    const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+    let html = '';
+    for (const k of keys.sort()) {
+      const r = g[k];
+      const cell = (h) => {
+        const m = mean(r.h[h]);
+        return m === null ? '<td class="n dim">—</td>'
+          : '<td class="n ' + (m >= 0 ? 'pos' : 'neg') + '">' + signed(m, 2) + '%</td>';
+      };
+      const s = r.h[900];
+      const p = s.length ? (s.filter(v => v > 1).length / s.length * 100) : null;
+      html += '<tr><td>' + k + '</td><td class="n">' + r.n + '</td>' + cell(60) + cell(300) + cell(900)
+        + '<td class="n">' + (p === null ? '<span class="dim">—</span>' : fmt(p, 0) + '%<span class="dim"> n=' + s.length + '</span>') + '</td></tr>';
+    }
+    $('stbody').innerHTML = html;
+  }
+  renderAudit();
+}
+
+function renderAudit() {
+  if (S.source !== 'sim') {
+    $('audbody').innerHTML = '<tr><td colspan="4" class="empty">En vivo no hay etiqueta de referencia.</td></tr>';
+    $('auditline').textContent = 'Con datos reales la única validación posible es la estadística posterior de arriba.';
+    return;
+  }
+  const g = {};
+  S.truth.forEach(t => { (g[t.type] = g[t.type] || { inj: 0, det: 0, cov: new Set() }).inj++; });
+  let fp = 0;
+  for (const e of S.events) {
+    if (e.injected === 'calma' || !e.injected) { fp++; continue; }
+    const k = g[e.injected];
+    if (k) { k.det++; k.cov.add(e.truthIdx); }
+  }
+  const keys = Object.keys(g).sort();
+  if (!keys.length) return;
+  let html = '';
+  for (const k of keys) {
+    const r = g[k];
+    const cov = r.inj ? r.cov.size / r.inj * 100 : 0;
+    html += '<tr><td class="num" style="font-size:11px">' + k + '</td>'
+      + '<td class="n">' + r.inj + '</td><td class="n">' + r.det + '</td>'
+      + '<td class="n ' + (cov >= 60 ? 'pos' : cov > 0 ? '' : 'neg') + '">' + fmt(cov, 0) + '%</td></tr>';
+  }
+  html += '<tr><td class="num" style="font-size:11px;color:var(--signal)">calma</td><td class="n dim">—</td>'
+    + '<td class="n ' + (fp ? 'neg' : 'pos') + '">' + fp + '</td><td class="n dim">falsos positivos</td></tr>';
+  $('audbody').innerHTML = html;
+  const tot = S.events.length;
+  $('auditline').innerHTML = tot
+    ? '<b>' + fmt((tot - fp) / tot * 100, 0) + '%</b> de los eventos cayeron dentro de un escenario real. '
+    + 'Baja el percentil de agresión a 85 y verás subir los falsos positivos: ese es el compromiso que hay que calibrar.'
+    : 'Sin eventos todavía.';
+}
+
+/* =========================================================================
+   Integridad del libro y esquema
+   ========================================================================= */
+let lastIntegrity = 0;
+function checkIntegrity() {
+  if (S.source !== 'sim' || !S.book.ready) { $('st-drift').textContent = '—'; return; }
+  const now = performance.now();
+  if (now - lastIntegrity < 900) return;
+  lastIntegrity = now;
+  const t = SIM.truthBook();
+  let diff = 0;
+  for (const e of t.bids) if (Math.abs((S.book.bids.get(e[0]) || 0) - e[1]) > 1e-6) diff++;
+  for (const e of t.asks) if (Math.abs((S.book.asks.get(e[0]) || 0) - e[1]) > 1e-6) diff++;
+  for (const p of S.book.bids.keys()) if (!t.bids.has(p)) diff++;
+  for (const p of S.book.asks.keys()) if (!t.asks.has(p)) diff++;
+  S.bookDrift = diff;
+  const el = $('st-drift');
+  el.textContent = diff === 0 ? '0 niveles' : diff + ' niveles';
+  el.className = 'v ' + (diff === 0 ? 'pos' : 'neg');
+}
+
+function writeSchema() {
+  const p = S.processed[0], f = S.features[0];
+  if (!p || !f) return;
+  const t = (v) => v === null ? 'double' : typeof v === 'number'
+    ? (Number.isInteger(v) && Math.abs(v) > 1e9 ? 'int64' : 'double') : 'string';
+  let s = 'processed/  (una fila por segundo de mercado)\n';
+  for (const k of Object.keys(p)) s += '  ' + k.padEnd(18) + t(p[k]) + '\n';
+  s += '\nfeatures/\n';
+  for (const k of Object.keys(f)) s += '  ' + k.padEnd(18) + t(f[k]) + '\n';
+  s += '\nevents/\n  timestamp         int64\n  type              string\n  price             double\n'
+    + '  conditions        string\n  fwd_60/300/900    double\n';
+  s += '\n# DuckDB sobre los Parquet que escribirá el proyecto Python\n';
+  s += "SELECT date_trunc('minute', to_timestamp(timestamp/1000)) AS m,\n";
+  s += '       avg(obi_20) AS obi, sum(delta_volume) AS delta\n';
+  s += "FROM 'data/features/2026/09/*.parquet'\n";
+  s += 'WHERE obi_20 > 0.5 GROUP BY 1 ORDER BY 1;';
+  $('schema').textContent = s;
+  $('schema').dataset.done = '1';
+}
+
+/* =========================================================================
+   Exportación
+   ========================================================================= */
+function download(name, text) {
+  const b = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const u = URL.createObjectURL(b);
+  const a = document.createElement('a');
+  a.href = u; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(u), 4000);
+}
+document.querySelectorAll('[data-dl]').forEach(btn => btn.addEventListener('click', () => {
+  const kind = btn.dataset.dl;
+  const day = new Date(clock.now()).toISOString().slice(0, 10).replace(/-/g, '');
+  if (kind === 'raw') download('raw_btcusdt_' + day + '.ndjson', S.raw.toArray().map(o => JSON.stringify(o)).join('\n'));
+  if (kind === 'processed') download('processed_btcusdt_' + day + '.csv', toCSV(S.processed));
+  if (kind === 'features') download('features_btcusdt_' + day + '.csv', toCSV(S.features));
+  if (kind === 'events') download('events_btcusdt_' + day + '.csv', toCSV(S.events.map(e => ({
+    timestamp: e.t, type: e.type, price: e.price, conditions: e.cond.join(' | '),
+    injected: e.injected || '', fwd_60: e.fwd[60], fwd_300: e.fwd[300], fwd_900: e.fwd[900]
+  }))));
+}));
+
+/* =========================================================================
+   Control
+   ========================================================================= */
+function start() {
+  stop(true);
+  S.err = null; S.paused = false; hideBanner();
+  S.source = $('src').value;
+  S.market = $('mkt').value;
+  clock.speed = parseFloat($('speedsel').value) || 1;
+  feed = S.source === 'sim' ? SIM : LIVE;
+  clock.mode = S.source === 'sim' ? 'sim' : 'live';
+  if (S.source === 'sim') clock.t = Date.UTC(2026, 8, 14, 8, 0, 0);
+  resetSession();
+  lastQty.clear(); lastEvCount = -1;
+  S.msgRateAt = performance.now();
+  $('schema').dataset.done = '';
+  S.running = true;
+  $('start').disabled = true;
+  $('stop').disabled = false;
+  $('pause').disabled = S.source !== 'sim';
+  $('pause').textContent = 'Pausar';
+  $('lad-src').textContent = S.source === 'sim'
+    ? 'snapshot + deltas cada ' + feed.depthMs() + ' ms'
+    : 'Binance ' + (S.market === 'fut' ? 'futuros' : 'spot') + ' @depth@100ms';
+  setState('Arrancando', 'warn');
+  if (S.source === 'live') banner('El navegador va a abrir un WebSocket contra Binance. Si el entorno lo bloquea, descarga el archivo y ábrelo desde tu disco.', '');
+
+  let sd = parseInt($('seed').value, 10);
+  if (!Number.isFinite(sd)) { sd = Date.now() | 0; $('seed').value = String(sd); }
+  feed.start(sd);
+}
+function stop(silent) {
+  if (S.running) feed.stop();
+  S.running = false; S.paused = false;
+  $('start').disabled = false;
+  $('stop').disabled = true;
+  $('pause').disabled = true;
+  $('pause').textContent = 'Pausar';
+  if (!silent) setState('Detenido', '');
+}
+$('start').addEventListener('click', start);
+$('stop').addEventListener('click', () => stop(false));
+$('pause').addEventListener('click', () => {
+  S.paused = !S.paused;
+  $('pause').textContent = S.paused ? 'Reanudar' : 'Pausar';
+  S.lastRender = 0; render();
+});
+$('collapse-all').addEventListener('click', () => setAll(true));
+$('expand-all').addEventListener('click', () => setAll(false));
+$('speedsel').addEventListener('change', () => {
+  clock.speed = parseFloat($('speedsel').value) || 1;
+  if (S.running && S.source === 'sim') $('lad-src').textContent = 'snapshot + deltas cada ' + feed.depthMs() + ' ms';
+});
+$('src').addEventListener('change', () => {
+  const live = $('src').value === 'live';
+  $('speedsel').disabled = live;
+  $('seed').disabled = live;
+  if (live) $('speedsel').value = '1';
+});
+window.addEventListener('resize', () => { S.lastRender = 0; });
+
+buildLadder();
+makeCollapsible();
+setState('Inactivo', '');
+
+/* =========================================================================
+   Parámetros de order flow
+   ========================================================================= */
+const P_DEFAULTS = JSON.parse(JSON.stringify(P));
+const P_LIMITS = {
+  barSec: [5, 3600], bucket: [0.5, 500], vaPct: [10, 99], vwapBars: [0, 240],
+  sig1: [0.1, 5], sig2: [0.1, 6], imbRatio: [1.1, 50], imbMinVol: [0, 1000],
+  imbStack: [2, 20], bigTrade: [0.01, 1000], kyleBars: [5, 240],
+  vpinBucket: [1, 100000], vpinN: [2, 400], acLag: [1, 50], slopeLevels: [3, 200],
+  nearUsd: [1, 5000], spoofMin: [0.1, 10000], spoofMs: [100, 60000],
+  icebergK: [1.1, 50], divBars: [4, 120], oiWin: [30, 7200],
+  wDelta: [-3, 3], wObi: [-3, 3], wRepl: [-3, 3], wCvd: [-3, 3], wBook: [-3, 3]
+};
+function applyParam(k, raw) {
+  const v = parseFloat(raw);
+  if (!Number.isFinite(v)) return;
+  const l = P_LIMITS[k];
+  P[k] = l ? clamp(v, l[0], l[1]) : v;
+  if (k === 'bucket') { OF.profile.clear(); OF.cache.prof = null; if (OF.cur) OF.cur.levels.clear(); }
+  if (k === 'barSec') OF.cur = null;
+  OF.cache.at = 0; OF.cache.acAt = 0;
+  S.lastRender = 0;
+}
+function bindParams() {
+  for (const k of Object.keys(P)) {
+    const el = $('of-' + k);
+    if (!el) continue;
+    el.value = P[k];
+    el.addEventListener('input', () => applyParam(k, el.value));
+    el.addEventListener('blur', () => { el.value = P[k]; });
+  }
+  $('of-reset').addEventListener('click', () => {
+    Object.assign(P, JSON.parse(JSON.stringify(P_DEFAULTS)));
+    for (const k of Object.keys(P)) { const el = $('of-' + k); if (el) el.value = P[k]; }
+    OF.profile.clear(); OF.cache.prof = null; OF.cur = null;
+    S.lastRender = 0; render();
+  });
+}
+
+/* =========================================================================
+   Order flow · pintado
+   ========================================================================= */
+function renderOF() {
+  const f = S.features[S.features.length - 1];
+  if (vis('m-bardelta')) renderDelta(f);
+  if (vis('m-poc')) renderProfile();
+  if (vis('m-vwap')) renderVWAP(f);
+  if (vis('footbody')) renderFootprint();
+  if (vis('m-micro')) renderMicro(f);
+  if (vis('m-kyle')) renderTox(f);
+  if (vis('g-score')) renderScore(f);
+}
+const setv = (id, txt, cls) => {
+  const e = $(id); if (!e) return;
+  e.innerHTML = txt;
+  e.className = 'v' + (cls ? ' ' + cls : '');
+};
+
+function renderDelta(f) {
+  const b = OF.cur;
+  setv('m-bardelta', b ? signed(b.delta, 2) + ' BTC' : '—', b && b.delta >= 0 ? 'pos' : 'neg');
+  setv('m-mmdelta', b ? signed(b.maxDelta, 1) + ' / ' + signed(b.minDelta, 1) : '—');
+  setv('m-cvd', f ? signed(f.cvd, 1) + ' BTC' : '—', f && f.cvd >= 0 ? 'pos' : 'neg');
+  const d = OF.divergence();
+  setv('m-div', d ? d.dir : 'ninguna', d ? (d.dir === 'alcista' ? 'pos' : 'neg') : 'dim');
+  $('m-div-h').textContent = d ? d.txt : 'Precio y delta acumulado van de la mano';
+
+  const c = sizeCanvas($('cv-delta'));
+  if (!c) return;
+  const bars = OF.bars.slice(-60).concat(OF.cur ? [OF.cur] : []);
+  $('ch-bardelta').textContent = bars.length + ' barras de ' + P.barSec + ' s';
+  if (bars.length < 2) return;
+  const ctx = c.ctx, w = c.w, h = c.h;
+  let m = 0.001;
+  for (const x of bars) m = Math.max(m, Math.abs(x.delta));
+  const bw = Math.max(1, (w - 2) / bars.length - 1);
+  const mid = h / 2;
+  ctx.strokeStyle = '#24374a'; ctx.beginPath();
+  ctx.moveTo(0, mid + 0.5); ctx.lineTo(w, mid + 0.5); ctx.stroke();
+  for (let i = 0; i < bars.length; i++) {
+    const x = 1 + i * ((w - 2) / bars.length);
+    const hh = Math.abs(bars[i].delta) / m * (mid - 3);
+    const cur = OF.cur && bars[i] === OF.cur;
+    ctx.fillStyle = cur ? '#e8b54b' : (bars[i].delta >= 0 ? '#2fbf87' : '#f06a5d');
+    ctx.fillRect(x, bars[i].delta >= 0 ? mid - hh : mid, bw, Math.max(1, hh));
+  }
+}
+
+function renderProfile() {
+  const pr = OF.profileStats();
+  if (!pr) { $('ch-prof').textContent = '—'; return; }
+  const f = S.features[S.features.length - 1];
+  setv('m-poc', fmt(pr.poc, 1), 'sig');
+  setv('m-vah', fmt(pr.vah, 1));
+  setv('m-val', fmt(pr.val, 1));
+  if (f) {
+    const inside = f.mid >= pr.val && f.mid <= pr.vah;
+    setv('m-vapos', inside ? 'dentro' : (f.mid > pr.vah ? 'sobre el VAH' : 'bajo el VAL'),
+      inside ? 'dim' : (f.mid > pr.vah ? 'pos' : 'neg'));
+  }
+  $('ch-prof').textContent = fmt(pr.total, 0) + ' BTC en ' + pr.rows.length + ' niveles';
+
+  const c = sizeCanvas($('cv-prof'));
+  if (!c) return;
+  const ctx = c.ctx, w = c.w, h = c.h;
+  const rows = pr.rows;
+  const lo = rows[0].p, hi = rows[rows.length - 1].p;
+  const Y = (p) => h - 2 - (p - lo) / Math.max(1e-9, hi - lo) * (h - 4);
+  const rh = Math.max(1.5, (h - 4) / rows.length - 0.5);
+  for (const r of rows) {
+    const y = Y(r.p) - rh / 2;
+    const tot = r.v / pr.maxV * (w - 66);
+    const bw = r.v > 0 ? tot * (r.b / r.v) : 0;
+    ctx.fillStyle = 'rgba(47,191,135,.55)'; ctx.fillRect(60, y, bw, rh);
+    ctx.fillStyle = 'rgba(240,106,93,.55)'; ctx.fillRect(60 + bw, y, tot - bw, rh);
+  }
+  const line = (p, col, lab) => {
+    const y = Y(p);
+    ctx.strokeStyle = col; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(56, y + 0.5); ctx.lineTo(w, y + 0.5); ctx.stroke();
+    ctx.fillStyle = col; ctx.font = '10px ui-monospace, monospace';
+    ctx.fillText(lab, 2, y + 3.5);
+  };
+  line(pr.vah, '#546b81', 'VAH');
+  line(pr.val, '#546b81', 'VAL');
+  line(pr.poc, '#e8b54b', 'POC');
+  if (f) line(f.mid, '#e6edf3', 'mid');
+}
+
+function renderVWAP(f) {
+  const v = OF.vwapStats();
+  if (!v || !f) { setv('m-vwap', '—'); return; }
+  setv('m-vwap', fmt(v.vwap, 1));
+  const z = v.sd > 0 ? (f.mid - v.vwap) / v.sd : 0;
+  setv('m-vwapd', signed(z, 2) + ' σ', z >= 0 ? 'pos' : 'neg');
+  setv('m-vwapu', fmt(v.u2, 1));
+  setv('m-vwapl', fmt(v.d2, 1));
+  $('ch-vwap').textContent = 'σ ' + fmt(v.sd, 1) + ' USD';
+
+  const c = sizeCanvas($('cv-vwap'));
+  if (!c) return;
+  const ctx = c.ctx, w = c.w, h = c.h;
+  const tail = S.features.slice(-600).filter(r => isNum(r.of_vwap));
+  if (tail.length < 3) return;
+  let lo = Infinity, hi = -Infinity;
+  for (const r of tail) {
+    lo = Math.min(lo, r.mid, r.of_vwap - P.sig2 * r.of_vwap_sd);
+    hi = Math.max(hi, r.mid, r.of_vwap + P.sig2 * r.of_vwap_sd);
+  }
+  const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+  const X = (i) => i / (tail.length - 1) * (w - 2) + 1;
+  const Y = (p) => h - 2 - (p - lo) / Math.max(1e-9, hi - lo) * (h - 4);
+  ctx.beginPath();
+  for (let i = 0; i < tail.length; i++) ctx.lineTo(X(i), Y(tail[i].of_vwap + P.sig2 * tail[i].of_vwap_sd));
+  for (let i = tail.length - 1; i >= 0; i--) ctx.lineTo(X(i), Y(tail[i].of_vwap - P.sig2 * tail[i].of_vwap_sd));
+  ctx.closePath(); ctx.fillStyle = 'rgba(126,148,168,.13)'; ctx.fill();
+  const path = (key, col, wd) => {
+    ctx.beginPath();
+    for (let i = 0; i < tail.length; i++) { const x = X(i), y = Y(typeof key === 'function' ? key(tail[i]) : tail[i][key]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.stroke();
+  };
+  path('of_vwap', '#e8b54b', 1.3);
+  path('mid', '#e6edf3', 1.2);
+}
+
+function renderFootprint() {
+  const bar = OF.cur || OF.bars[OF.bars.length - 1];
+  const fp = OF.footprint(bar);
+  setv('m-stack', fp ? (fp.stack === 0 ? 'ninguno' : signed(fp.stack, 0)) : '—',
+    fp && fp.stacked ? (fp.stack > 0 ? 'pos' : 'neg') : 'dim');
+  setv('m-big', OF.big.n + ' · ' + fmt(OF.big.vol, 1) + ' BTC');
+  if (!fp) { $('footbody').innerHTML = '<div class="empty">Sin datos todavía.</div>'; return; }
+  const pr = OF.cache.prof;
+  let maxv = 0.001;
+  for (const r of fp.rows) maxv = Math.max(maxv, r.buy, r.sell);
+  let html = '';
+  for (const r of fp.rows.slice(0, 40)) {
+    const d = r.buy - r.sell;
+    const mark = r.flag > 0 ? '<span style="color:var(--bid)">◀</span>'
+      : r.flag < 0 ? '<span style="color:var(--ask)">▶</span>' : '';
+    const isPoc = pr && Math.abs(r.p - pr.poc) < 1e-9;
+    html += '<div class="fprow' + (isPoc ? ' poc' : '') + '">'
+      + '<span class="dim">' + r.p.toFixed(1) + '</span>'
+      + '<span class="b">' + r.buy.toFixed(2) + '</span>'
+      + '<span class="s">' + r.sell.toFixed(2) + '</span>'
+      + '<span class="d ' + (d >= 0 ? 'pos' : 'neg') + '">' + signed(d, 2) + '</span>'
+      + '<span class="m">' + mark + '</span></div>';
+  }
+  $('footbody').innerHTML = html;
+}
+
+function renderMicro(f) {
+  if (!f) return;
+  setv('m-micro', fmt(f.of_micro_price, 1));
+  setv('m-microbps', signed(f.of_micro_bps, 3) + ' bps', f.of_micro_bps >= 0 ? 'pos' : 'neg');
+  setv('m-slope', fmt(f.of_slope_bid, 2) + ' / ' + fmt(f.of_slope_ask, 2));
+  setv('m-repl', isNum(f.of_repl_ratio) ? fmt(f.of_repl_ratio, 1) + '×' : '—');
+  setv('m-replskew', signed(f.of_repl_skew, 3), f.of_repl_skew >= 0 ? 'pos' : 'neg');
+  setv('m-spoof', fmt(f.of_spoof, 1) + ' <small class="dim">' + OF.spoof.events + ' ev.</small>',
+    f.of_spoof > 20 ? 'neg' : 'dim');
+  if (S.source === 'sim' && feed.walls) {
+    const wl = feed.walls();
+    const rec = wl.pulled ? Math.round(100 * Math.min(OF.spoof.events, wl.pulled) / wl.pulled) : 0;
+    $('m-spoof-h').textContent = wl.pulled
+      ? wl.pulled + ' paredes falsas retiradas sin que las tocaran, ' + OF.spoof.events
+        + ' detectadas (' + rec + '%)'
+      : 'El simulador aún no ha colocado paredes falsas';
+  } else {
+    $('m-spoof-h').textContent = 'Órdenes grandes retiradas antes de que las toquen';
+  }
+  setv('m-ice', String(f.of_iceberg));
+  setv('m-void', fmt(f.of_void_usd, 2) + ' USD', f.of_void_usd > 0 ? 'neg' : 'dim');
+}
+
+function renderTox(f) {
+  if (!f) return;
+  setv('m-kyle', isNum(f.of_kyle) ? fmt(f.of_kyle, 3) : '—');
+  setv('m-vpin', isNum(f.of_vpin) ? fmt(f.of_vpin, 3) : '—', f.of_vpin > 0.5 ? 'neg' : 'dim');
+  setv('m-ac', isNum(f.of_sign_ac) ? signed(f.of_sign_ac, 3) : '—', f.of_sign_ac > 0 ? 'pos' : 'dim');
+  setv('m-effort', isNum(f.of_effort) ? fmt(f.of_effort, 1) + ' BTC/bp' : '—');
+  setv('m-int', fmt(f.of_intensity, 1) + ' /s');
+  setv('m-bigshare', fmt(f.of_big_share * 100, 1) + '%');
+}
+
+function renderScore(f) {
+  const sc = OF.score(f);
+  if (!sc) return;
+  const v = sc.val, wdt = Math.abs(v) * 50;
+  const g = $('g-score');
+  g.style.left = (v >= 0 ? 50 : 50 - wdt) + '%';
+  g.style.width = wdt.toFixed(2) + '%';
+  g.style.background = v >= 0 ? 'var(--bid)' : 'var(--ask)';
+  $('m-score').textContent = signed(v, 3);
+  $('m-score').className = 'num ' + (v >= 0 ? 'pos' : 'neg');
+  let html = '';
+  for (const p of sc.parts) {
+    html += '<div class="mcell"><div class="k">' + p.k + '</div>'
+      + '<div class="v ' + (p.v >= 0 ? 'pos' : 'neg') + '">' + signed(p.v, 3) + '</div>'
+      + '<div class="h">peso ' + p.w + '</div></div>';
+  }
+  $('scoreparts').innerHTML = html;
+}
+
+/* =========================================================================
+   Fuentes de datos y autodiagnóstico
+   ========================================================================= */
+const API_ROWS = [
+  ['wss @depth@100ms', 'Deltas del libro para reconstruir L2', () => S.book.ready ? 'en uso' : 'esperando'],
+  ['wss @aggTrade', 'Agresiones: precio, tamaño y lado', () => S.features.length ? 'en uso' : '—'],
+  ['wss @forceOrder', 'Liquidaciones forzosas del símbolo', () => S.source === 'sim' ? 'simulado' : 'en uso'],
+  ['wss @markPrice@1s', 'Mark price, índice y funding', () => isNum(S.ctx.mark) ? 'en uso' : '—'],
+  ['REST /fapi/v1/depth', 'Snapshot inicial y resincronización', () => S.resyncs + ' resync'],
+  ['REST /fapi/v1/openInterest', 'Open interest, no viaja por WebSocket', () => isNum(S.ctx.oi) ? 'en uso' : '—'],
+  ['REST takerlongshortRatio', 'Ratio de volumen agresor', () => isNum(S.ctx.takerRatio) ? 'en uso' : '—'],
+  ['REST topLongShortPositionRatio', 'Posicionamiento de grandes cuentas', () => isNum(S.ctx.topPosRatio) ? 'en uso' : '—'],
+  ['REST globalLongShortAccountRatio', 'Posicionamiento agregado de cuentas', () => isNum(S.ctx.accRatio) ? 'en uso' : '—'],
+  ['wss !forceOrder@arr', 'Liquidaciones de todo el mercado', () => 'disponible, sin usar'],
+  ['REST /futures/data/openInterestHist', 'Histórico de open interest a 5 m', () => 'disponible, sin usar'],
+  ['REST /fapi/v1/fundingRate', 'Histórico de funding', () => 'disponible, sin usar']
+];
+function renderAPI() {
+  if (!vis('apibody')) return;
+  let html = '';
+  for (const r of API_ROWS) {
+    const st = r[2]();
+    const cls = st === 'en uso' ? 'pos' : st.indexOf('sin usar') >= 0 ? 'dim' : '';
+    html += '<tr><td class="num" style="font-size:11px">' + r[0] + '</td>'
+      + '<td class="dim">' + r[1] + '</td><td class="' + cls + '">' + st + '</td></tr>';
+  }
+  $('apibody').innerHTML = html;
+  $('apinote').textContent = S.ctx.restErr
+    ? 'El sondeo REST falló: ' + S.ctx.restErr + '. Abre el archivo desde tu disco si el visor bloquea las peticiones.'
+    : 'Todos admiten CORS y no requieren clave. En modo directo el sondeo REST corre cada 30 s.';
+}
+
+$('runtests').addEventListener('click', () => {
+  if (S.running) { $('testnote').textContent = 'Detén la captura antes: las pruebas escriben en el estado global.'; return; }
+  $('testnote').textContent = 'Ejecutando…';
+  setTimeout(() => {
+    const res = runTests();
+    const pass = res.filter(r => r.ok).length;
+    let html = '<table><thead><tr><th>Grupo</th><th>Prueba</th><th>Resultado</th></tr></thead><tbody>';
+    for (const r of res) {
+      html += '<tr><td class="dim" style="font-size:11px">' + r.grupo + '</td>'
+        + '<td style="white-space:normal">' + r.nombre
+        + (r.ok ? '' : '<div class="neg" style="font-size:11px">' + r.err + '</div>') + '</td>'
+        + '<td class="' + (r.ok ? 'pos' : 'neg') + '">' + (r.ok ? 'pasa' : 'falla') + '</td></tr>';
+    }
+    $('testbody').innerHTML = html + '</tbody></table>';
+    $('testnote').innerHTML = '<b class="' + (pass === res.length ? 'pos' : 'neg') + '">'
+      + pass + ' de ' + res.length + '</b> pruebas correctas.';
+    S.lastRender = 0;
+  }, 30);
+});
+
+bindParams();
+renderAPI();
+
+/* =========================================================================
+   Autodiagnóstico
+   Pruebas sobre las piezas puras del pipeline. Se ejecutan con la captura
+   detenida porque tocan el estado global, y lo dejan limpio al terminar.
+   ========================================================================= */
+const TESTS = [];
+const test = (grupo, nombre, fn) => TESTS.push({ grupo, nombre, fn });
+
+function eq(a, b, msg) {
+  if (a !== b) throw new Error((msg ? msg + ': ' : '') + 'esperaba ' + b + ' y obtuve ' + a);
+}
+function near(a, b, tol, msg) {
+  if (!isNum(a) || Math.abs(a - b) > tol)
+    throw new Error((msg ? msg + ': ' : '') + 'esperaba ' + b + ' ±' + tol + ' y obtuve ' + a);
+}
+function ok(c, msg) { if (!c) throw new Error(msg || 'condición falsa'); }
+
+const snap = (bids, asks, id) => ({
+  lastUpdateId: id,
+  bids: bids.map(x => [String(x[0]), String(x[1])]),
+  asks: asks.map(x => [String(x[0]), String(x[1])])
+});
+
+/* ---------- libro ---------- */
+test('Libro L2', 'el snapshot carga niveles y descarta cantidades cero', () => {
+  const b = new OrderBook();
+  b.applySnapshot(snap([[100, 2], [99, 0]], [[101, 3]], 10));
+  eq(b.bids.size, 1); eq(b.asks.size, 1);
+  eq(b.bestBid(), 100); eq(b.bestAsk(), 101);
+});
+
+test('Libro L2', 'el delta reemplaza la cantidad, no la suma', () => {
+  const b = new OrderBook();
+  b.applySnapshot(snap([[100, 3.25]], [[101, 2.4]], 10));
+  b.applyDelta({ U: 11, u: 12, pu: 10, b: [['100', '2.10']], a: [] });
+  eq(b.bids.get(100), 2.10, 'el nivel debe quedar en 2.10');
+});
+
+test('Libro L2', 'cantidad cero elimina el nivel', () => {
+  const b = new OrderBook();
+  b.applySnapshot(snap([[100, 3], [99, 1]], [[101, 2]], 10));
+  b.applyDelta({ U: 11, u: 11, pu: 10, b: [['100', '0']], a: [] });
+  eq(b.bids.has(100), false); eq(b.bestBid(), 99);
+});
+
+test('Libro L2', 'el primer evento encadena con pu igual a lastUpdateId', () => {
+  const b = new OrderBook();
+  b.applySnapshot(snap([[100, 1]], [[101, 1]], 500));
+  eq(b.applyDelta({ U: 501, u: 510, pu: 500, b: [], a: [] }), 'ok');
+});
+
+test('Libro L2', 'el primer evento también vale si cubre el lastUpdateId', () => {
+  const b = new OrderBook();
+  b.applySnapshot(snap([[100, 1]], [[101, 1]], 500));
+  eq(b.applyDelta({ U: 495, u: 505, b: [], a: [] }), 'ok');
+});
+
+test('Libro L2', 'un evento anterior al snapshot se descarta', () => {
+  const b = new OrderBook();
+  b.applySnapshot(snap([[100, 1]], [[101, 1]], 500));
+  eq(b.applyDelta({ U: 400, u: 450, pu: 399, b: [], a: [] }), 'stale');
+  eq(b.stale, 1); eq(b.ready, true);
+});
+
+test('Libro L2', 'pu discontinuo marca hueco e invalida el libro', () => {
+  const b = new OrderBook();
+  b.applySnapshot(snap([[100, 1]], [[101, 1]], 500));
+  b.applyDelta({ U: 501, u: 510, pu: 500, b: [], a: [] });
+  eq(b.applyDelta({ U: 520, u: 530, pu: 519, b: [], a: [] }), 'gap');
+  eq(b.ready, false); eq(b.gaps, 1);
+});
+
+test('Libro L2', 'top y depthSum ordenan y suman correctamente', () => {
+  const b = new OrderBook();
+  b.applySnapshot(snap([[99, 1], [100, 2], [98, 3]], [[101, 1], [103, 5], [102, 2]], 1));
+  eq(b.top('b', 2)[0][0], 100); eq(b.top('b', 2)[1][0], 99);
+  eq(b.top('a', 2)[0][0], 101); eq(b.top('a', 2)[1][0], 102);
+  eq(b.depthSum('b', 3), 6); eq(b.depthSum('a', 2), 3);
+});
+
+test('Libro L2', 'el gancho onLevel recibe cantidad anterior y nueva', () => {
+  const seen = [];
+  const b = new OrderBook((s, p, prev, q) => seen.push([s, p, prev, q]));
+  b.applySnapshot(snap([[100, 1]], [[101, 1]], 1));
+  b.applyDelta({ U: 2, u: 2, pu: 1, b: [['100', '4']], a: [] });
+  eq(seen.length, 1); eq(seen[0][2], 1); eq(seen[0][3], 4);
+});
+
+/* ---------- utilidades ---------- */
+test('Utilidades', 'el percentil cae en el valor esperado', () => {
+  const a = sortedCopy([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  eq(pct(a, 0), 1); eq(pct(a, 100), 10); near(pct(a, 50), 5, 1);
+});
+
+test('Utilidades', 'el CSV entrecomilla comas y vacía los nulos', () => {
+  const csv = toCSV([{ a: 1, b: 'x,y', c: null }]);
+  eq(csv.split('\n')[0], 'a,b,c');
+  eq(csv.split('\n')[1], '1,"x,y",');
+});
+
+test('Utilidades', 'el buffer circular conserva solo lo último y cuenta el total', () => {
+  const r = new Ring(3);
+  for (let i = 1; i <= 5; i++) r.push(i);
+  eq(r.total, 5); eq(r.len, 3);
+  eq(r.toArray().join(','), '3,4,5');
+  eq(r.last(2).join(','), '4,5');
+});
+
+/* ---------- order flow ---------- */
+function ofFixture(trades) {
+  OF.reset();
+  S.cvd = 0;
+  for (const t of trades) { S.cvd += t[3] ? t[2] : -t[2]; OF.onTrade(t[0], t[1], t[2], t[3]); }
+}
+
+test('Order flow', 'el VWAP pondera por volumen', () => {
+  ofFixture([[0, 100, 1, true], [1000, 200, 3, false]]);
+  const v = OF.vwapStats();
+  near(v.vwap, 175, 0.001, 'VWAP de 100×1 y 200×3');
+});
+
+test('Order flow', 'el POC cae en el precio de mayor volumen', () => {
+  P.bucket = 5;
+  ofFixture([
+    [0, 100, 1, true], [1, 100, 1, false],
+    [2, 205, 9, true],
+    [3, 310, 2, false]
+  ]);
+  const pr = OF.profileStats(true);
+  eq(pr.poc, 205, 'el cubo de 205 concentra el volumen');
+  near(pr.total, 13, 0.001);
+});
+
+test('Order flow', 'el área de valor cubre el porcentaje pedido', () => {
+  P.bucket = 5; P.vaPct = 70;
+  const tr = [];
+  for (let i = 0; i < 20; i++) tr.push([i, 1000 + i * 5, i === 10 ? 20 : 1, true]);
+  ofFixture(tr);
+  const pr = OF.profileStats(true);
+  let acc = 0;
+  for (const r of pr.rows) if (r.p >= pr.val && r.p <= pr.vah) acc += r.v;
+  ok(acc / pr.total >= 0.70, 'el área cubre al menos el 70%: ' + (acc / pr.total).toFixed(3));
+  ok(pr.val <= pr.poc && pr.poc <= pr.vah, 'el POC queda dentro del área');
+});
+
+test('Order flow', 'VPIN es 1 cuando todo el flujo va en la misma dirección', () => {
+  P.vpinBucket = 10; P.vpinN = 20;
+  const tr = []; for (let i = 0; i < 100; i++) tr.push([i, 100, 1, true]);
+  ofFixture(tr);
+  near(OF.vpinValue(), 1, 0.001);
+});
+
+test('Order flow', 'VPIN es 0 cuando compra y venta se alternan a partes iguales', () => {
+  P.vpinBucket = 10; P.vpinN = 20;
+  const tr = []; for (let i = 0; i < 200; i++) tr.push([i, 100, 1, i % 2 === 0]);
+  ofFixture(tr);
+  near(OF.vpinValue(), 0, 0.05);
+});
+
+test('Order flow', 'lambda de Kyle recupera la pendiente de un impacto lineal', () => {
+  OF.reset();
+  P.kyleBars = 30;
+  // barras sintéticas: el precio se mueve 0.5 USD por BTC de delta
+  for (let i = 0; i < 20; i++) {
+    const d = (i % 5) - 2;
+    OF.bars.push({ delta: d, open: 100, close: 100 + 0.5 * d, high: 101, low: 99, cvdEnd: 0, levels: new Map() });
+  }
+  near(OF.kyle(), 0.5, 0.0001);
+});
+
+test('Order flow', 'la autocorrelación de signos alternos es negativa', () => {
+  const tr = []; for (let i = 0; i < 500; i++) tr.push([i, 100, 0.01, i % 2 === 0]);
+  ofFixture(tr);
+  OF.cache.acAt = 0;
+  near(OF.signAC(1e9), -1, 0.05);
+});
+
+test('Order flow', 'la autocorrelación de un flujo persistente es positiva', () => {
+  const tr = []; for (let i = 0; i < 600; i++) tr.push([i, 100, 0.01, Math.floor(i / 20) % 2 === 0]);
+  ofFixture(tr);
+  OF.cache.acAt = 0;
+  ok(OF.signAC(1e9) > 0.5, 'debería ser claramente positiva');
+});
+
+test('Order flow', 'el footprint marca el desequilibrio diagonal comprador', () => {
+  P.bucket = 5; P.imbRatio = 3; P.imbMinVol = 0.5; P.imbStack = 2;
+  const bar = { levels: new Map([[100, [9, 0.1]], [95, [0.1, 1]], [105, [9, 0.1]]]) };
+  const fp = OF.footprint(bar);
+  const r100 = fp.rows.find(r => r.p === 100);
+  eq(r100.flag, 1, 'compra 9 contra venta 1 un escalón abajo');
+  ok(fp.stacked, 'dos desequilibrios seguidos cuentan como apilados');
+});
+
+test('Order flow', 'la divergencia bajista aparece con máximo más alto y CVD más bajo', () => {
+  OF.reset(); P.divBars = 10;
+  for (let i = 0; i < 5; i++) OF.bars.push({ high: 100 + i, low: 90, cvdEnd: 50 + i, delta: 0, open: 100, close: 100, levels: new Map() });
+  for (let i = 0; i < 5; i++) OF.bars.push({ high: 110 + i, low: 95, cvdEnd: 20 - i, delta: 0, open: 100, close: 100, levels: new Map() });
+  const d = OF.divergence();
+  ok(d && d.dir === 'bajista', 'debería detectar divergencia bajista');
+});
+
+test('Order flow', 'la pendiente del libro crece con la profundidad acumulada', () => {
+  P.slopeLevels = 5;
+  const rows = [[99.5, 1], [99, 1], [98.5, 1], [98, 1], [97.5, 1]];
+  const sl = OF.slope(rows, 100, -1);
+  ok(isNum(sl) && sl > 0, 'la pendiente debe ser positiva: ' + sl);
+});
+
+test('Order flow', 'el parpadeo de una orden grande suma al score de spoofing', () => {
+  OF.reset(); OF.mid = 100; P.spoofMin = 3; P.spoofMs = 2000; P.nearUsd = 25;
+  OF.onLevel('b', 99, 0, 10, 1000);
+  OF.onLevel('b', 99, 10, 0, 1500);
+  ok(OF.spoof.events === 1 && OF.spoof.score >= 10, 'alta y baja en 500 ms sin operar');
+});
+
+test('Order flow', 'los niveles lejos del toque no entran en el análisis', () => {
+  OF.reset(); P.nearUsd = 15; P.spoofMin = 12;
+  OF.onTrade(1000, 100, 0.1, true);          // fija la referencia de precio en 100
+  OF.onLevel('b', 60, 0, 30, 1000);          // 40 USD por debajo: fuera de rango
+  OF.onLevel('b', 60, 30, 0, 1200);
+  eq(OF.spoof.events, 0, 'fuera del rango no cuenta');
+  OF.onLevel('b', 95, 0, 30, 1000);          // 5 USD por debajo: dentro
+  OF.onLevel('b', 95, 30, 0, 1200);
+  eq(OF.spoof.events, 1);
+});
+
+test('Order flow', 'cada operación refresca la referencia de precio', () => {
+  OF.reset();
+  OF.onTrade(1000, 100, 0.1, true);
+  eq(OF.mid, 100);
+  OF.onTrade(1001, 250, 0.1, false);
+  eq(OF.mid, 250, 'no puede quedarse con el precio anterior');
+});
+
+test('Order flow', 'si la orden se ejecuta no cuenta como spoofing', () => {
+  OF.reset(); OF.mid = 100; P.spoofMin = 3; P.spoofMs = 2000;
+  OF.onLevel('b', 99, 0, 10, 1000);
+  OF.onTrade(1200, 99, 4, false);
+  OF.onLevel('b', 99, 10, 0, 1500);
+  eq(OF.spoof.events, 0);
+});
+
+test('Order flow', 'el iceberg salta cuando lo ejecutado supera lo mostrado', () => {
+  OF.reset(); OF.mid = 100; P.icebergK = 2.5; P.bigTrade = 1; P.nearUsd = 25;
+  OF.onLevel('a', 101, 0, 2, 1000);
+  OF.onTrade(1100, 101, 3, true);
+  OF.onTrade(1200, 101, 3, true);
+  eq(OF.ice.count, 1);
+});
+
+test('Order flow', 'lo ejecutado se reinicia cuando el nivel desaparece', () => {
+  OF.reset(); OF.mid = 100; P.icebergK = 2.5; P.bigTrade = 1; P.nearUsd = 25;
+  OF.onLevel('a', 101, 0, 2, 1000);
+  OF.onTrade(1100, 101, 3, true);
+  OF.onTrade(1150, 101, 3, true);            // 6 ejecutado sobre 2 mostrado
+  eq(OF.ice.count, 1, 'la primera vida del nivel sí es un iceberg');
+  OF.onLevel('a', 101, 2, 0, 1200);          // el nivel se agota
+  OF.onLevel('a', 101, 0, 2, 1250);          // llega una orden nueva
+  eq(OF.ice.exec.get(101), 0, 'la cuenta arranca de cero con el nivel nuevo');
+  OF.onTrade(1300, 101, 1, true);
+  eq(OF.ice.count, 1, 'la orden nueva todavía no es iceberg');
+});
+
+test('Order flow', 'una escalera continua no reporta huecos de liquidez', () => {
+  P.slopeLevels = 10;
+  const bids = [], asks = [];
+  for (let i = 0; i < 10; i++) { bids.push([100 - i * 0.5, 1]); asks.push([101 + i * 0.5, 1]); }
+  eq(OF.void(bids, asks), 0);
+});
+
+test('Order flow', 'un salto de precio mayor que el escalón sí reporta hueco', () => {
+  P.slopeLevels = 10;
+  const bids = [[100, 1], [99.5, 1], [95, 1], [94.5, 1]];
+  const asks = [[101, 1], [101.5, 1], [102, 1]];
+  near(OF.void(bids, asks), 4, 0.01, 'salto de 4.5 con escalón de 0.5');
+});
+
+/* ---------- detector ---------- */
+test('Order flow', 'un nivel que se repone a su tamaño sigue contando como iceberg', () => {
+  OF.reset(); OF.mid = 100; P.icebergK = 2.5; P.bigTrade = 1; P.nearUsd = 25;
+  OF.onLevel('a', 101, 0, 2, 1000);
+  for (let i = 0; i < 3; i++) {
+    OF.onTrade(1100 + i * 50, 101, 1.9, true);
+    OF.onLevel('a', 101, 0.1, 2, 1120 + i * 50);      // vuelve al mismo tamaño
+  }
+  eq(OF.ice.count, 1, 'reponerse al mismo tamaño es justo la firma del iceberg');
+});
+
+test('Order flow', 'una orden mucho mayor reinicia la cuenta del iceberg', () => {
+  OF.reset(); OF.mid = 100; P.icebergK = 2.5; P.bigTrade = 1; P.nearUsd = 25;
+  OF.onLevel('a', 101, 0, 2, 1000);
+  OF.onTrade(1100, 101, 4, true);
+  OF.onLevel('a', 101, 2, 20, 1150);                  // llega una orden diez veces mayor
+  eq(OF.ice.exec.get(101), 0);
+  eq(OF.ice.count, 0);
+});
+
+test('Detector', 'la secuencia de absorción dispara exactamente un evento', () => {
+  const keep = { f: S.features, e: S.events, d: S.detState, src: S.source };
+  S.features = []; S.events = []; S.detState = freshDet(); S.source = 'live';
+  CACHE.pAt = 0; CACHE.p95 = 0;
+  const base = 1700000000000;
+  const mk = (i, o) => Object.assign({
+    timestamp: base + i * 1000, mid: 100000, obi_5: 0, obi_10: 0, obi_20: 0, obi_50: 0,
+    buy_volume: 1, sell_volume: 1, delta_volume: 0, cvd: 0, trades: 2,
+    liq_buy: 0, liq_sell: 0, liq_total: 0, liq_count: 0
+  }, o);
+  for (let i = 0; i < 200; i++) S.features.push(mk(i));
+  const push = (i, o) => { const f = mk(i, o); S.features.push(f); detect({}, f); };
+  push(200, { sell_volume: 50, obi_20: -0.35, mid: 99990 });     // agresión extrema, precio aguanta
+  for (let i = 201; i < 210; i++) push(i, { obi_20: -0.1, mid: 99992 });
+  push(210, { obi_20: 0.35, mid: 100300 });                      // el libro gira y el precio recupera
+  const abs = S.events.filter(e => e.type === 'ABSORCIÓN COMPRADORA');
+  eq(abs.length, 1, 'un único evento de absorción');
+  ok(abs[0].cond.length === 4, 'debe registrar las cuatro condiciones');
+  S.features = keep.f; S.events = keep.e; S.detState = keep.d; S.source = keep.src;
+});
+
+test('Detector', 'sin recuperación de precio no dispara', () => {
+  const keep = { f: S.features, e: S.events, d: S.detState, src: S.source };
+  S.features = []; S.events = []; S.detState = freshDet(); S.source = 'live';
+  CACHE.pAt = 0; CACHE.p95 = 0;
+  const base = 1700000000000;
+  const mk = (i, o) => Object.assign({
+    timestamp: base + i * 1000, mid: 100000, obi_5: 0, obi_10: 0, obi_20: 0, obi_50: 0,
+    buy_volume: 1, sell_volume: 1, delta_volume: 0, cvd: 0, trades: 2,
+    liq_buy: 0, liq_sell: 0, liq_total: 0, liq_count: 0
+  }, o);
+  for (let i = 0; i < 200; i++) S.features.push(mk(i));
+  const push = (i, o) => { const f = mk(i, o); S.features.push(f); detect({}, f); };
+  push(200, { sell_volume: 50, obi_20: -0.35, mid: 99990 });
+  for (let i = 201; i < 215; i++) push(i, { obi_20: 0.35, mid: 99990 });
+  eq(S.events.filter(e => e.type === 'ABSORCIÓN COMPRADORA').length, 0);
+  S.features = keep.f; S.events = keep.e; S.detState = keep.d; S.source = keep.src;
+});
+
+/* ---------- integración ---------- */
+test('Integración', 'buildRow genera el esquema completo de processed y features', () => {
+  const keep = { p: S.processed, f: S.features, b: S.book, w: S.win };
+  S.processed = []; S.features = []; S.book = newBook(); OF.reset();
+  const bids = [], asks = [];
+  for (let i = 0; i < 60; i++) { bids.push([100000 - i * 0.5, 1 + i * 0.01]); asks.push([100001 + i * 0.5, 1 + i * 0.01]); }
+  S.book.applySnapshot(snap(bids, asks, 1));
+  S.win = { buy: 2, sell: 1, nTrades: 5, liqBuy: 0.5, liqSell: 0, nLiq: 1 };
+  buildRow(1700000000000);
+  const row = S.processed[0], f = S.features[0];
+  ok(row && f, 'debe crear una fila');
+  for (const k of ['best_bid', 'best_ask', 'mid_price', 'spread', 'spread_bps', 'bid_volume_20', 'ask_volume_50'])
+    ok(k in row, 'falta la columna ' + k + ' en processed');
+  for (const k of ['obi_5', 'obi_20', 'delta_volume', 'cvd', 'liq_count', 'of_micro_price', 'of_vpin', 'of_score'])
+    ok(k in f, 'falta la columna ' + k + ' en features');
+  near(f.obi_20, (row.bid_volume_20 - row.ask_volume_20) / (row.bid_volume_20 + row.ask_volume_20), 0.0002);
+  eq(f.delta_volume, 1);
+  S.processed = keep.p; S.features = keep.f; S.book = keep.b; S.win = keep.w;
+});
+
+test('Integración', 'el CSV de features se puede volver a leer con los mismos valores', () => {
+  const rows = [{ timestamp: 1, obi_20: -0.1234, cvd: 12.5, of_vpin: null }];
+  const csv = toCSV(rows);
+  const [head, line] = csv.split('\n');
+  const keys = head.split(','), vals = line.split(',');
+  eq(keys.length, vals.length);
+  near(parseFloat(vals[keys.indexOf('obi_20')]), -0.1234, 1e-9);
+  eq(vals[keys.indexOf('of_vpin')], '');
+});
+
+function runTests() {
+  const defaults = JSON.parse(JSON.stringify(P));
+  const res = [];
+  for (const t of TESTS) {
+    const t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    try { t.fn(); res.push({ ...t, ok: true, ms: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0 }); }
+    catch (e) { res.push({ ...t, ok: false, err: e.message, ms: 0 }); }
+  }
+  Object.assign(P, defaults);
+  OF.reset();
+  return res;
+}
+
+</script>
+</body>
+</html>
