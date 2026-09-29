@@ -1,0 +1,62 @@
+{
+  "app": "backtest-honesto",
+  "version": 1,
+  "guardado": "2026-09-29T15:53:24.270Z",
+  "modo": "basico",
+  "configuracion": "10",
+  "mercado": {
+    "simbolo": "BTCUSDT",
+    "temporalidad": "1h",
+    "desde": "2025-09-29",
+    "hasta": "2026-09-28"
+  },
+  "broker": {
+    "perfil": "binance-futuros",
+    "bnb": false,
+    "maker": 0.0002,
+    "taker": 0.0005,
+    "spread": 0.0003,
+    "slippage": "medio",
+    "slipEntrada": 0.00025,
+    "slipSalida": 0.00025,
+    "tipoEntrada": "taker",
+    "tipoSalida": "taker",
+    "funding": "historico",
+    "fundingFijo": 0.0001,
+    "swapDiario": 0,
+    "comisionFija": 0,
+    "comisionRetiro": 1,
+    "notionalMinimo": 50,
+    "mmr": 0.004,
+    "comisionLiquidacion": 0.0125,
+    "stopOut": 0
+  },
+  "cuenta": {
+    "capital": 10,
+    "apalancamiento": 20,
+    "tamano": {
+      "tipo": "margenPct",
+      "valor": 0.5
+    },
+    "compuesto": true,
+    "ruina": 0.9,
+    "direcciones": "ambas"
+  },
+  "estrategia": {
+    "id": "ema-cruce",
+    "params": {
+      "rapida": 9,
+      "lenta": 21
+    },
+    "stopLoss": 0.01,
+    "takeProfit": 0.02
+  },
+  "validacion": {
+    "semilla": 20260929,
+    "monos": 1000,
+    "remuestreos": 2000,
+    "fueraDeMuestra": 0.3,
+    "ventanaMeses": 3
+  },
+  "comparar": []
+}
